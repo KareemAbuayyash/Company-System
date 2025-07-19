@@ -118,26 +118,6 @@ CompanySystem/
 3. **Lead**: Team management, technical notes for subordinates
 4. **Employee**: Self-service profile viewing
 
-## Features
-- ✅ User authentication and authorization
-- ✅ Role-based access control
-- ✅ Employee profile management
-- ✅ Department management
-- ✅ Notes system (Technical & Behavioral)
-- ✅ Content management system
-- ✅ Filtering and sorting capabilities
-- ✅ Responsive design
-
-## Development Phases
-- **Week 1**: Foundation Setup (Authentication & Data Foundation)
-- **Week 2**: Core Authentication & Departments
-- **Week 3**: User Profiles & CMS
-- **Week 4**: Notes System Foundation
-- **Week 5**: Role-Specific Features
-- **Week 6**: Advanced Features & Polish
-- **Week 7**: Testing & Bug Fixes
-- **Week 8**: Final Integration & Documentation
-
 ## Getting Started
 1. Clone the repository
 2. Open the solution in Visual Studio
@@ -146,23 +126,7 @@ CompanySystem/
 5. Seed the database with initial data
 6. Build and run the application
 
-## Database Setup
-```bash
-# Add migration
-dotnet ef migrations add InitialCreate --project CompanySystem.Data --startup-project CompanySystem.Web
-
-# Update database
-dotnet ef database update --project CompanySystem.Data --startup-project CompanySystem.Web
-```
-
 ## Project Dependencies
 - Microsoft.EntityFrameworkCore.SqlServer
 - Microsoft.EntityFrameworkCore.Tools
 - Microsoft.Extensions.DependencyInjection
-
-## Contact
-- **Email**: sayesh@asaltech.com
-- **Mobile**: +970 598201254
-
----
-*Training Project by Shady Ayesh - Asal Technologies* 
