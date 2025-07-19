@@ -18,7 +18,9 @@ CompanySystem/
 └── CompanySystem.Data/         # Data Access Layer (Models, DbContext, Repositories)
 ```
 
-### 1. CompanySystem.Web (Presentation Layer)
+### Detailed Folder Structure
+
+#### 1. CompanySystem.Web (Presentation Layer)
 ```
 CompanySystem.Web/
 ├── Areas/                      # Role-based areas
@@ -42,14 +44,19 @@ CompanySystem.Web/
 ├── ViewModels/                 # View models for data transfer
 ├── Helpers/                    # Helper classes and utilities
 ├── Middleware/                 # Custom middleware
-└── wwwroot/                    # Static files
-    ├── css/                    # Stylesheets
-    ├── js/                     # JavaScript files
-    ├── images/                 # Image assets
-    └── lib/                    # Library files (Bootstrap, jQuery, etc.)
+├── Properties/                 # Project properties
+├── wwwroot/                    # Static files
+│   ├── css/                    # Stylesheets
+│   ├── js/                     # JavaScript files
+│   ├── images/                 # Image assets
+│   └── lib/                    # Library files (Bootstrap, jQuery, etc.)
+├── appsettings.json            # Application configuration
+├── appsettings.Development.json # Development configuration
+├── Program.cs                  # Application entry point
+└── CompanySystem.Web.csproj    # Project file
 ```
 
-### 2. CompanySystem.Business (Business Logic Layer)
+#### 2. CompanySystem.Business (Business Logic Layer)
 ```
 CompanySystem.Business/
 ├── Services/                   # Business services
@@ -68,10 +75,12 @@ CompanySystem.Business/
 ├── Validators/                 # Validation classes
 ├── Exceptions/                 # Custom exceptions
 ├── Extensions/                 # Extension methods
-└── Utilities/                  # Utility classes
+├── Utilities/                  # Utility classes
+├── Class1.cs                   # Default class file
+└── CompanySystem.Business.csproj # Project file
 ```
 
-### 3. CompanySystem.Data (Data Access Layer)
+#### 3. CompanySystem.Data (Data Access Layer)
 ```
 CompanySystem.Data/
 ├── Models/                     # Entity models
@@ -82,7 +91,18 @@ CompanySystem.Data/
 ├── Configurations/             # Entity configurations (Fluent API)
 ├── Migrations/                 # Entity Framework migrations
 ├── SeedData/                   # Database seed data
-└── Enums/                      # Enumerations
+├── Enums/                      # Enumerations
+├── Class1.cs                   # Default class file
+└── CompanySystem.Data.csproj   # Project file
+```
+
+### Root Solution Files
+```
+CompanySystem/
+├── CompanySystem.sln           # Solution file
+├── README.md                   # Project documentation
+├── .gitignore                  # Git ignore rules
+└── .history/                   # IDE history files
 ```
 
 ## Core Entities (Code First)
