@@ -16,7 +16,6 @@ namespace CompanySystem.Data.Context
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configure Department entity
             modelBuilder.Entity<Department>(entity =>
             {
                 entity.HasKey(e => e.DepartmentId);
@@ -25,12 +24,10 @@ namespace CompanySystem.Data.Context
                 entity.Property(e => e.CreatedBy).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.UpdatedBy).HasMaxLength(100);
                 
-                // Indexes for performance
                 entity.HasIndex(e => e.DepartmentName);
                 entity.HasIndex(e => e.ManagerId);
             });
 
-            // Configure MainPageContent entity
             modelBuilder.Entity<MainPageContent>(entity =>
             {
                 entity.HasKey(e => e.ContentId);
@@ -41,15 +38,12 @@ namespace CompanySystem.Data.Context
                 entity.Property(e => e.CreatedBy).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.UpdatedBy).HasMaxLength(100);
                 
-                // Index for performance
                 entity.HasIndex(e => e.SectionName);
             });
 
-            // Global query filters for soft delete
             modelBuilder.Entity<Department>().HasQueryFilter(e => !e.IsDeleted);
             modelBuilder.Entity<MainPageContent>().HasQueryFilter(e => !e.IsDeleted);
 
-            // Seed initial data
             SeedData(modelBuilder);
         }
 

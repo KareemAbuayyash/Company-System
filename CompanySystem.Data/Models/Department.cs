@@ -11,7 +11,6 @@ namespace CompanySystem.Data.Models
         [StringLength(200)]
         public string DepartmentName { get; set; } = string.Empty;
 
-        // Foreign Key to Users table (will be created by your team)
         public int? ManagerId { get; set; }
     }
 }
