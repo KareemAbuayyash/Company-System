@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CompanySystem.Data.Models
 {
-    public abstract class BaseEntity
+    public abstract class TrackingEntity
     {
         [Required]
         [StringLength(100)]
