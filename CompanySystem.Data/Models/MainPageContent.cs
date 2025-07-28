@@ -9,13 +9,13 @@ namespace CompanySystem.Data.Models
 
         [Required]
         [StringLength(50)]
-        public string SectionName { get; set; } = string.Empty; // Overview, AboutUs, Services
+        public string SectionName { get; set; }  // Overview, AboutUs, Services
 
         [Required]
         [StringLength(200)]
-        public string Title { get; set; } = string.Empty;
+        public string Title { get; set; } 
 
         [Required]
-        public string Content { get; set; } = string.Empty;
+        public string Content { get; set; } 
     }
 }
