@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CompanySystem.Data.Models
 {
-    public class MainPageContent : BaseEntity
+    public class MainPageContent : TrackingEntity
     {
         [Key]
         public int ContentId { get; set; }
