@@ -20,11 +20,9 @@ namespace CompanySystem.Data.Models
         
         public DateTime? UpdatedAt { get; set; }
         
-        [StringLength(100)]
-        public string? CreatedBy { get; set; }
+        public int? CreatedById { get; set; }
         
-        [StringLength(100)]
-        public string? UpdatedBy { get; set; }
+        public int? UpdatedById { get; set; }
         
         [DefaultValue(false)]
         public bool IsDeleted { get; set; } = false;

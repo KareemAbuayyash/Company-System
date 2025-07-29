@@ -1,83 +1,124 @@
-# CompanySystem.Data - Authentication Foundation
+# Company System Data Layer
 
-## AHMAD ALARJAH - WEEK 1 AUTHENTICATION FOUNDATION
+## Repository Pattern Implementation
 
-This Data layer contains the core entities, interfaces, and seed data for the authentication system.
+### Overview
+This project implements a clean, generic repository pattern with proper inheritance and minimal code duplication.
 
-## Project Structure
+### Structure
 
 ```
 CompanySystem.Data/
-├── Models/
-│   ├── User.cs (✅ Complete with Data Annotations)
-│   └── Role.cs (✅ Complete with Data Annotations)
 ├── Interfaces/
-│   ├── IAuditableEntity.cs (✅ Base interface for audit fields)
-│   ├── IRepository.cs (✅ Generic repository pattern)
-│   ├── IUnitOfWork.cs (✅ Transaction management)
-│   ├── IAuthenticationService.cs (✅ Authentication contract)
-│   ├── IUserRepository.cs (✅ User-specific operations)
-│   └── IRoleRepository.cs (✅ Role-specific operations)
-└── SeedData/
-    └── InitialRoles.cs (✅ Initial role data)
+│   ├── IBaseRepository.cs          # Generic base interface
+│   ├── IUserRepository.cs          # User-specific interface (minimal)
+│   ├── IRoleRepository.cs          # Role-specific interface (minimal)
+│   └── IAuditableEntity.cs         # Audit interface
+├── Repositories/
+│   ├── BaseRepository.cs           # Generic base implementation
+│   ├── UserRepository.cs           # User-specific implementation
+│   └── RoleRepository.cs           # Role-specific implementation
+├── Models/
+│   ├── User.cs                     # User entity
+│   └── Role.cs                     # Role entity
+└── Data/
+    └── CompanyDbContext.cs         # DbContext
 ```
 
-## Features Implemented
+### Available Methods
 
-### Entities (Models)
-- **User Entity**: Complete user model with all required fields, Data Annotations, navigation properties, and audit fields
-- **Role Entity**: Role model with navigation to users, proper constraints, and audit fields using Data Annotations
-- **IAuditableEntity**: Base interface ensuring all entities have audit fields (CreatedAt, UpdatedAt, CreatedBy, UpdatedBy, IsDeleted)
+#### Generic Methods (Available on all repositories)
+```csharp
+// Basic CRUD
+await repo.GetByIdAsync<int>(id);
+await repo.GetAllAsync();
+await repo.AddAsync(entity);
+await repo.AddRangeAsync(entities);
+await repo.UpdateAsync(entity);
+await repo.DeleteAsync(entity);
+await repo.DeleteByIdAsync<int>(id);
 
-### Interfaces
-- **IRepository<T>**: Generic repository pattern for CRUD operations with soft deletion support
-- **IUnitOfWork**: Transaction management interface
-- **IAuthenticationService**: Authentication service contract
-- **IUserRepository**: User-specific repository operations with soft deletion methods
-- **IRoleRepository**: Role-specific repository operations
-- **IAuditableEntity**: Base interface for entities with audit fields
+// Query operations
+await repo.FindAsync(predicate);
+await repo.FirstOrDefaultAsync(predicate);
+await repo.ExistsAsync(predicate);
+await repo.CountAsync(predicate);
 
-### Data Annotations & Seed Data
-- **User Entity**: Configured with Data Annotations for validation, constraints, and relationships
-- **Role Entity**: Configured with Data Annotations for validation, constraints, and relationships
-- **InitialRoles**: Static class providing seed data for initial roles (Administrator, HR, Lead, Employee)
+// Soft delete operations
+await repo.SoftDeleteAsync(entity);
+await repo.SoftDeleteByIdAsync<int>(id);
+await repo.RestoreAsync(entity);
+await repo.RestoreByIdAsync<int>(id);
+```
 
-## Initial Roles Seeded
-1. Administrator
-2. HR
-3. Lead
-4. Employee
+#### Specific Methods (Only where needed)
+```csharp
+// UserRepository
+await userRepo.GetByEmailAsync(email);
+await userRepo.GetByEmployeeIdAsync(employeeId);
 
-## Audit Fields & Soft Deletion
+// RoleRepository
+await roleRepo.GetByNameAsync(roleName);
+```
 
-### Audit Fields
-All entities implement `IAuditableEntity` with the following audit fields:
-- **CreatedAt**: Automatically set to UTC timestamp when entity is created
-- **UpdatedAt**: Set to UTC timestamp when entity is modified
-- **CreatedBy**: Username/ID of who created the entity
-- **UpdatedBy**: Username/ID of who last modified the entity
-- **IsDeleted**: Soft deletion flag (default: false)
+### Usage Examples
 
-### Soft Deletion Support
-- **SoftDeleteAsync()**: Marks entity as deleted without removing from database
-- **RestoreAsync()**: Restores soft-deleted entity
-- **GetAllIncludingDeletedAsync()**: Retrieves all entities including soft-deleted ones
-- **GetDeletedUsersAsync()**: Retrieves only soft-deleted users
-- **GetByEmailIncludingDeletedAsync()**: Finds user by email including soft-deleted
+#### Instead of specific methods, use predicates:
+```csharp
+// ❌ Don't create specific methods for these:
+// GetByRoleAsync(int roleId)
+// GetActiveUsersAsync()
+// GetDeletedUsersAsync()
 
-## Ready for Implementation
+// ✅ Use existing generic methods with predicates:
+await userRepo.FindAsync(u => u.RoleId == roleId && !u.IsDeleted);
+await userRepo.FindAsync(u => u.IsActive && !u.IsDeleted);
+await userRepo.FindAsync(u => u.IsDeleted);
 
-The Data layer is now complete and ready for:
-- **Business Layer**: Implement IAuthenticationService
-- **Data Layer**: Implement DbContext using Data Annotations
-- **Data Layer**: Implement repositories using interfaces
-- **Web Layer**: Create authentication controllers
+// ✅ For single results:
+await userRepo.FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted);
+await userRepo.FirstOrDefaultAsync(u => u.EmployeeId == employeeId && !u.IsDeleted);
+```
 
-## Dependencies
-- Microsoft.EntityFrameworkCore.SqlServer (9.0.7)
-- Microsoft.EntityFrameworkCore.Tools (9.0.7)
-- System.ComponentModel.Annotations (5.0.0)
+#### Including deleted entities:
+```csharp
+// Get all users including deleted
+await userRepo.FindAsync(u => true);
 
----
+// Get user by email including deleted
+await userRepo.FirstOrDefaultAsync(u => u.Email == email);
+```
 
-**AHMAD'S AUTHENTICATION FOUNDATION COMPLETE! 🚀** 
+#### Complex queries:
+```csharp
+// Get users by multiple criteria
+await userRepo.FindAsync(u => 
+    u.RoleId == roleId && 
+    u.IsActive && 
+    u.Salary > 50000 && 
+    !u.IsDeleted);
+
+// Count active users
+await userRepo.CountAsync(u => u.IsActive && !u.IsDeleted);
+
+// Check if email exists
+await userRepo.ExistsAsync(u => u.Email == email && !u.IsDeleted);
+```
+
+### Key Benefits
+
+1. **DRY Principle**: No code duplication
+2. **Type Safety**: Generic methods with proper constraints
+3. **Flexibility**: Use predicates for any query
+4. **Maintainability**: Easy to add new entities
+5. **Consistency**: All repositories follow the same pattern
+6. **Automatic Audit**: Audit fields are set automatically
+7. **Smart Filtering**: Deleted entities are excluded by default
+
+### Best Practices
+
+1. **Use predicates instead of specific methods** for common queries
+2. **Only create specific methods** when they require special logic
+3. **Leverage the generic methods** for most operations
+4. **Use the audit functionality** for soft deletes and tracking
+5. **Keep repositories focused** on data access only 

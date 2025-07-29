@@ -2,14 +2,10 @@ using CompanySystem.Data.Models;
 
 namespace CompanySystem.Data.Interfaces
 {
-    public interface IUserRepository : IRepository<User>
+    public interface IUserRepository : IBaseRepository<User>
     {
+        // Only methods that require special logic or can't be easily achieved with predicates
         Task<User?> GetByEmailAsync(string email);
         Task<User?> GetByEmployeeIdAsync(string employeeId);
-        Task<IEnumerable<User>> GetByRoleAsync(int roleId);
-        Task<IEnumerable<User>> GetActiveUsersAsync();
-        Task<IEnumerable<User>> GetDeletedUsersAsync();
-        Task<User?> GetByEmailIncludingDeletedAsync(string email);
-        Task<User?> GetByEmployeeIdIncludingDeletedAsync(string employeeId);
     }
-} 
+}
