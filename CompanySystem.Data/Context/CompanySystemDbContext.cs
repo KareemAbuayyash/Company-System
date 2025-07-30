@@ -121,11 +121,11 @@ namespace CompanySystem.Data.Context
         private void UpdateAuditFields()
         {
             var entries = ChangeTracker.Entries()
-                .Where(e => e.Entity is BaseEntity && (e.State == EntityState.Added || e.State == EntityState.Modified));
+                .Where(e => e.Entity is TrackingEntity && (e.State == EntityState.Added || e.State == EntityState.Modified));
 
             foreach (var entry in entries)
             {
-                var entity = (BaseEntity)entry.Entity;
+                var entity = (TrackingEntity)entry.Entity;
 
                 if (entry.State == EntityState.Added)
                 {
