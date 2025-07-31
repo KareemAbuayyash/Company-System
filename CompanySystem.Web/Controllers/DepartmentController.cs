@@ -14,7 +14,6 @@ namespace CompanySystem.Web.Controllers
             _departmentService = departmentService;
         }
 
-        // Simple test endpoint
         public IActionResult Test()
         {
             return Content("Department Controller is working!");
@@ -25,7 +24,7 @@ namespace CompanySystem.Web.Controllers
         {
             try
             {
-                // Use the efficient filtered method that handles everything at database level
+                
                 var departments = await _departmentService.GetFilteredDepartmentsAsync(searchTerm, sortBy);
 
                 var viewModels = departments.Select(d => new DepartmentViewModel
@@ -38,7 +37,7 @@ namespace CompanySystem.Web.Controllers
                     UpdatedDate = d.UpdatedDate
                 }).ToList();
 
-                // Pass search and sort parameters to view
+                
                 ViewBag.SearchTerm = searchTerm;
                 ViewBag.SortBy = sortBy;
                 ViewBag.TotalDepartments = viewModels.Count;
@@ -48,11 +47,10 @@ namespace CompanySystem.Web.Controllers
             }
             catch (Exception ex)
             {
-                // Log the error and return error view
                 ViewBag.ErrorMessage = $"Error loading departments: {ex.Message}";
                 return Content($"Error: {ex.Message} - Inner: {ex.InnerException?.Message}");
             }
-        }        // AJAX endpoint for fast search
+        }        
         [HttpGet]
         public async Task<IActionResult> SearchDepartments(string searchTerm, string sortBy = "name")
         {
@@ -63,9 +61,9 @@ namespace CompanySystem.Web.Controllers
                 departmentId = d.DepartmentId,
                 departmentName = d.DepartmentName,
                 createdBy = d.CreatedBy,
-                createdDate = d.CreatedDate.ToString("dd/MM/yyyy HH:mm"),
+                createdDate = d.CreatedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),
                 updatedBy = d.UpdatedBy,
-                updatedDate = d.UpdatedDate?.ToString("dd/MM/yyyy HH:mm")
+                updatedDate = d.UpdatedDate?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
             }).ToList();
 
             return Json(new
@@ -113,7 +111,6 @@ namespace CompanySystem.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Check if department name already exists
                 if (await _departmentService.DepartmentNameExistsAsync(model.DepartmentName))
                 {
                     ModelState.AddModelError("DepartmentName", "A department with this name already exists.");
@@ -123,7 +120,8 @@ namespace CompanySystem.Web.Controllers
                 var department = new Department
                 {
                     DepartmentName = model.DepartmentName,
-                    CreatedBy = "System", // TODO: Replace with actual user when authentication is implemented
+                    /// UpdatedBy = "System", //  Replace with actual user when authentication and entity user is implemented by Ahmad 
+                    CreatedBy = "System", 
                     CreatedDate = DateTime.UtcNow,
                     IsDeleted = false
                 };
@@ -166,7 +164,6 @@ namespace CompanySystem.Web.Controllers
 
             if (ModelState.IsValid)
             {
-                // Check if department name already exists (excluding current department)
                 if (await _departmentService.DepartmentNameExistsAsync(model.DepartmentName, id))
                 {
                     ModelState.AddModelError("DepartmentName", "A department with this name already exists.");
@@ -177,7 +174,7 @@ namespace CompanySystem.Web.Controllers
                 {
                     DepartmentId = model.DepartmentId,
                     DepartmentName = model.DepartmentName,
-                    UpdatedBy = "System" // TODO: Replace with actual user when authentication is implemented
+                    UpdatedBy = "System" // Replace with actual user when authentication and entity user is implemented by Ahmad 
                 };
 
                 try
@@ -222,7 +219,7 @@ namespace CompanySystem.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var result = await _departmentService.SoftDeleteDepartmentAsync(id, "System"); // TODO: Replace with actual user
+            var result = await _departmentService.SoftDeleteDepartmentAsync(id, "System"); //Replace with actual user when authentication and entity user is implemented by Ahmad 
             if (result)
             {
                 TempData["SuccessMessage"] = "Department deleted successfully!";

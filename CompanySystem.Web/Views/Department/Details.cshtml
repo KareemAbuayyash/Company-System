@@ -13,10 +13,6 @@
                     Department Details
                 </h2>
                 <div>
-                    <a href="@Url.Action("Edit", "Department", new { id = Model.DepartmentId })" class="btn btn-warning">
-                        <i class="fas fa-edit"></i>
-                        Edit
-                    </a>
                     <a href="@Url.Action("Index", "Department")" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i>
                         Back to List
@@ -50,7 +46,7 @@
                                 <dd class="col-sm-8">@Html.DisplayFor(model => model.CreatedBy)</dd>
 
                                 <dt class="col-sm-4">@Html.DisplayNameFor(model => model.CreatedDate):</dt>
-                                <dd class="col-sm-8">@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")</dd>
+                                <dd class="col-sm-8">@Model.CreatedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
 
                                 @if (!string.IsNullOrEmpty(Model.UpdatedBy))
                                 {
@@ -58,7 +54,7 @@
                                     <dd class="col-sm-8">@Html.DisplayFor(model => model.UpdatedBy)</dd>
 
                                     <dt class="col-sm-4">@Html.DisplayNameFor(model => model.UpdatedDate):</dt>
-                                    <dd class="col-sm-8">@Model.UpdatedDate?.ToString("dd/MM/yyyy HH:mm")</dd>
+                                    <dd class="col-sm-8">@Model.UpdatedDate?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
                                 }
                             </dl>
                         </div>
