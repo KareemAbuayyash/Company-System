@@ -4,15 +4,15 @@ using CompanySystem.Data.Enums;
 
 namespace CompanySystem.Data.Models
 {
-    [Table("MainPageContent")]
-    public class MainPageContent
+    [Table("Notes")]
+    public class Note
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int ContentId { get; set; }
+        public int NoteId { get; set; }
 
         [Required]
-        public SectionName SectionName { get; set; }
+        public NoteType NoteType { get; set; }
 
         [Required]
         [StringLength(200)]
@@ -23,19 +23,24 @@ namespace CompanySystem.Data.Models
         [Column(TypeName = "nvarchar(max)")]
         public string Content { get; set; } = string.Empty;
 
+        [Required]
         [Column(TypeName = "datetime2")]
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
-        [Required]
         [Column(TypeName = "datetime2")]
-        public DateTime UpdatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedDate { get; set; }
 
-        // Foreign Key
+        // Foreign Keys
         [Required]
-        [ForeignKey("UpdatedBy")]
-        public int UpdatedById { get; set; }
+        [ForeignKey("Employee")]
+        public int EmployeeId { get; set; }
 
-        // Navigation Property
-        public virtual User UpdatedBy { get; set; } = null!;
+        [Required]
+        [ForeignKey("CreatedBy")]
+        public int CreatedById { get; set; }
+
+        // Navigation Properties
+        public virtual User Employee { get; set; } = null!;
+        public virtual User CreatedBy { get; set; } = null!;
     }
-}
+} 
