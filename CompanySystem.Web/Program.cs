@@ -1,38 +1,22 @@
-using Microsoft.EntityFrameworkCore;
-using CompanySystem.Data.Context;
+using CompanySystem.Web.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews(); // Add MVC support
+builder.Services.AddCompanySystemServices(builder.Configuration);
+builder.Services.AddCompanySystemMvc();
 
-// Add Entity Framework with MySQL
-builder.Services.AddDbContext<CompanySystemDbContext>(options =>
-    options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MySqlServerVersion(new Version(8, 0, 21))
-    ));
+// Add logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-}
-else
-{
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
-}
+await app.UseCompanySystemAsync(builder.Environment);
 
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-
-app.UseRouting();
-
-app.UseAuthorization();
-
+// Configure routing
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
@@ -41,4 +25,13 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// Custom fallback - redirect to home page
+app.MapFallback(async (context) =>
+{
+    context.Response.Redirect("/Home/Index");
+});
+
 app.Run();
+
+// Make the implicit Program class public so test projects can access it
+public partial class Program { }
