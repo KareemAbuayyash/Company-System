@@ -14,32 +14,45 @@ namespace CompanySystem.Web.Controllers
             _departmentService = departmentService;
         }
 
+        // Simple test endpoint
+        public IActionResult Test()
+        {
+            return Content("Department Controller is working!");
+        }
+
         // GET: Department
         public async Task<IActionResult> Index(string searchTerm, string sortBy = "name")
         {
-            // Use the efficient filtered method that handles everything at database level
-            var departments = await _departmentService.GetFilteredDepartmentsAsync(searchTerm, sortBy);
-
-            var viewModels = departments.Select(d => new DepartmentViewModel
+            try
             {
-                DepartmentId = d.DepartmentId,
-                DepartmentName = d.DepartmentName,
-                CreatedBy = d.CreatedBy,
-                CreatedDate = d.CreatedDate,
-                UpdatedBy = d.UpdatedBy,
-                UpdatedDate = d.UpdatedDate
-            }).ToList();
+                // Use the efficient filtered method that handles everything at database level
+                var departments = await _departmentService.GetFilteredDepartmentsAsync(searchTerm, sortBy);
 
-            // Pass search and sort parameters to view
-            ViewBag.SearchTerm = searchTerm;
-            ViewBag.SortBy = sortBy;
-            ViewBag.TotalDepartments = viewModels.Count;
-            ViewBag.HasSearch = !string.IsNullOrWhiteSpace(searchTerm);
+                var viewModels = departments.Select(d => new DepartmentViewModel
+                {
+                    DepartmentId = d.DepartmentId,
+                    DepartmentName = d.DepartmentName,
+                    CreatedBy = d.CreatedBy,
+                    CreatedDate = d.CreatedDate,
+                    UpdatedBy = d.UpdatedBy,
+                    UpdatedDate = d.UpdatedDate
+                }).ToList();
 
-            return View(viewModels);
-        }
+                // Pass search and sort parameters to view
+                ViewBag.SearchTerm = searchTerm;
+                ViewBag.SortBy = sortBy;
+                ViewBag.TotalDepartments = viewModels.Count;
+                ViewBag.HasSearch = !string.IsNullOrWhiteSpace(searchTerm);
 
-        // AJAX endpoint for fast search
+                return View("Department", viewModels);
+            }
+            catch (Exception ex)
+            {
+                // Log the error and return error view
+                ViewBag.ErrorMessage = $"Error loading departments: {ex.Message}";
+                return Content($"Error: {ex.Message} - Inner: {ex.InnerException?.Message}");
+            }
+        }        // AJAX endpoint for fast search
         [HttpGet]
         public async Task<IActionResult> SearchDepartments(string searchTerm, string sortBy = "name")
         {
