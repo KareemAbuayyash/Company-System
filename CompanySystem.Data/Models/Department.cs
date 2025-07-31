@@ -9,8 +9,6 @@ namespace CompanySystem.Data.Models
 
         [Required]
         [StringLength(200)]
-        public string DepartmentName { get; set; } 
-
-        public int? ManagerId { get; set; }
+        public string DepartmentName { get; set; }
     }
 }

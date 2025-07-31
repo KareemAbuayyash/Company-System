@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using CompanySystem.Data.Context;
+using CompanySystem.Business.Interfaces;
+using CompanySystem.Business.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +14,9 @@ builder.Services.AddDbContext<CompanySystemDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection"),
         new MySqlServerVersion(new Version(8, 0, 21))
     ));
+
+// Register business services
+builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
 var app = builder.Build();
 
