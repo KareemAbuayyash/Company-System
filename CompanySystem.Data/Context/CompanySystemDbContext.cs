@@ -25,7 +25,6 @@ namespace CompanySystem.Data.Context
                 entity.Property(e => e.UpdatedBy).HasMaxLength(100);
                 
                 entity.HasIndex(e => e.DepartmentName);
-                entity.HasIndex(e => e.ManagerId);
             });
 
             modelBuilder.Entity<MainPageContent>(entity =>
@@ -55,7 +54,6 @@ namespace CompanySystem.Data.Context
                 {
                     DepartmentId = 1,
                     DepartmentName = "Human Resources",
-                    ManagerId = null,
                     CreatedBy = "System",
                     CreatedDate = DateTime.UtcNow,
                     IsDeleted = false
@@ -64,7 +62,6 @@ namespace CompanySystem.Data.Context
                 {
                     DepartmentId = 2,
                     DepartmentName = "Information Technology",
-                    ManagerId = null,
                     CreatedBy = "System",
                     CreatedDate = DateTime.UtcNow,
                     IsDeleted = false
@@ -121,11 +118,11 @@ namespace CompanySystem.Data.Context
         private void UpdateAuditFields()
         {
             var entries = ChangeTracker.Entries()
-                .Where(e => e.Entity is BaseEntity && (e.State == EntityState.Added || e.State == EntityState.Modified));
+                .Where(e => e.Entity is TrackingEntity && (e.State == EntityState.Added || e.State == EntityState.Modified));
 
             foreach (var entry in entries)
             {
-                var entity = (BaseEntity)entry.Entity;
+                var entity = (TrackingEntity)entry.Entity;
 
                 if (entry.State == EntityState.Added)
                 {

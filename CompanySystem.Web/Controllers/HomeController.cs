@@ -11,7 +11,7 @@ namespace CompanySystem.Web.Controllers
 
         public IActionResult About()
         {
-            return Content("Company System - Training Project is working!");
+            return View();
         }
     }
 } 
