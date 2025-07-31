@@ -6,6 +6,7 @@ using CompanySystem.Data.Repositories.Generic;
 using CompanySystem.Data.Repositories.Specific;
 using CompanySystem.Business.Interfaces.Auth;
 using CompanySystem.Business.Services.Auth;
+using CompanySystem.Business.Services;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace CompanySystem.Web.Extensions
@@ -32,6 +33,7 @@ namespace CompanySystem.Web.Extensions
 
             // Add Business Services
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<InitializationService>();
 
             // Add Authentication & Authorization
             services.AddAuthentication("CompanySystem")
@@ -128,6 +130,10 @@ namespace CompanySystem.Web.Extensions
             {
                 var context = scope.ServiceProvider.GetRequiredService<CompanyDbContext>();
                 await context.Database.MigrateAsync();
+                
+                // Initialize application data
+                var initializationService = scope.ServiceProvider.GetRequiredService<InitializationService>();
+                await initializationService.InitializeAsync();
             }
 
             return app;

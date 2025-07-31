@@ -135,23 +135,8 @@ namespace CompanySystem.Data.Data
                 new Role { RoleId = 4, RoleName = Role.RoleNames.Employee }
             );
 
-            // Seed initial admin user (password: Admin123!)
-            // In production, use proper password hashing
-            modelBuilder.Entity<User>().HasData(
-                new User
-                {
-                    UserId = 1,
-                    EmployeeId = "ADMIN001",
-                    FirstName = "System",
-                    LastName = "Administrator",
-                    Email = "admin@company.com",
-                    PasswordHash = "AQAAAAEAACcQAAAAEBv+X3w5V5yh3Z8bX0cX8+9YzGK8h7K2L1M6N9o0P3q4R7s8T5u6V9w0X3y6Z9a2B5c8",
-                    RoleId = 1,
-                    HireDate = DateTime.UtcNow,
-                    IsActive = true,
-                    CreatedDate = DateTime.UtcNow
-                }
-            );
+            // Note: Admin user will be created through a separate initialization service
+            // to avoid hardcoding password hashes in the database context
 
             // Seed default departments
             modelBuilder.Entity<Department>().HasData(
@@ -161,39 +146,8 @@ namespace CompanySystem.Data.Data
                 new Department { DepartmentId = 4, DepartmentName = "Operations", CreatedDate = DateTime.UtcNow }
             );
 
-            // Seed default main page content
-            modelBuilder.Entity<MainPageContent>().HasData(
-                new MainPageContent
-                {
-                    ContentId = 1,
-                    SectionName = SectionName.Overview,
-                    Title = "Company Overview",
-                    Content = "Welcome to our company management system.",
-                    UpdatedById = 1,
-                    CreatedDate = DateTime.UtcNow,
-                    UpdatedDate = DateTime.UtcNow
-                },
-                new MainPageContent
-                {
-                    ContentId = 2,
-                    SectionName = SectionName.AboutUs,
-                    Title = "About Us",
-                    Content = "We are a leading company in our industry.",
-                    UpdatedById = 1,
-                    CreatedDate = DateTime.UtcNow,
-                    UpdatedDate = DateTime.UtcNow
-                },
-                new MainPageContent
-                {
-                    ContentId = 3,
-                    SectionName = SectionName.Services,
-                    Title = "Our Services",
-                    Content = "We provide comprehensive business solutions.",
-                    UpdatedById = 1,
-                    CreatedDate = DateTime.UtcNow,
-                    UpdatedDate = DateTime.UtcNow
-                }
-            );
+            // Note: MainPageContent will be created through a separate initialization service
+            // to avoid hardcoding user references
         }
     }
 } 
