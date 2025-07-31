@@ -15,9 +15,11 @@ namespace CompanySystem.Web.Controllers
         }
 
         // GET: Department
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchTerm, string sortBy = "name")
         {
-            var departments = await _departmentService.GetAllDepartmentsAsync();
+            // Use the efficient filtered method that handles everything at database level
+            var departments = await _departmentService.GetFilteredDepartmentsAsync(searchTerm, sortBy);
+
             var viewModels = departments.Select(d => new DepartmentViewModel
             {
                 DepartmentId = d.DepartmentId,
@@ -28,7 +30,39 @@ namespace CompanySystem.Web.Controllers
                 UpdatedDate = d.UpdatedDate
             }).ToList();
 
+            // Pass search and sort parameters to view
+            ViewBag.SearchTerm = searchTerm;
+            ViewBag.SortBy = sortBy;
+            ViewBag.TotalDepartments = viewModels.Count;
+            ViewBag.HasSearch = !string.IsNullOrWhiteSpace(searchTerm);
+
             return View(viewModels);
+        }
+
+        // AJAX endpoint for fast search
+        [HttpGet]
+        public async Task<IActionResult> SearchDepartments(string searchTerm, string sortBy = "name")
+        {
+            var departments = await _departmentService.GetFilteredDepartmentsAsync(searchTerm, sortBy);
+            
+            var result = departments.Select(d => new
+            {
+                departmentId = d.DepartmentId,
+                departmentName = d.DepartmentName,
+                createdBy = d.CreatedBy,
+                createdDate = d.CreatedDate.ToString("dd/MM/yyyy HH:mm"),
+                updatedBy = d.UpdatedBy,
+                updatedDate = d.UpdatedDate?.ToString("dd/MM/yyyy HH:mm")
+            }).ToList();
+
+            return Json(new
+            {
+                success = true,
+                data = result,
+                count = result.Count,
+                searchTerm = searchTerm,
+                sortBy = sortBy
+            });
         }
 
         // GET: Department/Details/5

@@ -21,6 +21,49 @@ namespace CompanySystem.Business.Services
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Department>> GetFilteredDepartmentsAsync(string searchTerm = null, string sortBy = "name")
+        {
+            var query = _context.Departments.AsQueryable();
+
+            // Apply search filter at database level - now works from first character
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var trimmedSearchTerm = searchTerm.Trim();
+                query = query.Where(d => 
+                    EF.Functions.Like(d.DepartmentName, $"%{trimmedSearchTerm}%") ||
+                    EF.Functions.Like(d.CreatedBy, $"%{trimmedSearchTerm}%"));
+            }
+
+            // Apply sorting at database level
+            query = sortBy?.ToLower() switch
+            {
+                "name" => query.OrderBy(d => d.DepartmentName),
+                "name_desc" => query.OrderByDescending(d => d.DepartmentName),
+                "date" => query.OrderBy(d => d.CreatedDate),
+                "date_desc" => query.OrderByDescending(d => d.CreatedDate),
+                "creator" => query.OrderBy(d => d.CreatedBy),
+                "creator_desc" => query.OrderByDescending(d => d.CreatedBy),
+                _ => query.OrderBy(d => d.DepartmentName)
+            };
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<int> GetDepartmentCountAsync(string searchTerm = null)
+        {
+            var query = _context.Departments.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var trimmedSearchTerm = searchTerm.Trim();
+                query = query.Where(d => 
+                    EF.Functions.Like(d.DepartmentName, $"%{trimmedSearchTerm}%") ||
+                    EF.Functions.Like(d.CreatedBy, $"%{trimmedSearchTerm}%"));
+            }
+
+            return await query.CountAsync();
+        }
+
         public async Task<Department?> GetDepartmentByIdAsync(int id)
         {
             return await _context.Departments
