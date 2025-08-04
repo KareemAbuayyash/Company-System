@@ -2,49 +2,40 @@
 
 @{
     ViewData["Title"] = "Create Department";
+    ViewBag.SubmitText = "Create Department";
 }
 
 <div class="container-fluid">
+    @await Html.PartialAsync("_AlertsPartial")
+    
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="mb-0">
-                    <i class="fas fa-plus-circle"></i>
+                    <i class="fas fa-plus-circle text-success me-2"></i>
                     Create New Department
                 </h2>
-                <a href="@Url.Action("Index", "Department")" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i>
+                <a href="@Url.Action("Index", "Department")" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>
                     Back to List
                 </a>
             </div>
 
             <div class="row justify-content-center">
                 <div class="col-md-8 col-lg-6">
-                    <div class="card">
+                    <div class="card department-card">
                         <div class="card-header">
-                            <h4 class="card-title mb-0">Department Information</h4>
+                            <h4 class="card-title mb-0">
+                                <i class="fas fa-building me-2 text-primary"></i>
+                                Department Information
+                            </h4>
                         </div>
                         <div class="card-body">
                             <form action="@Url.Action("Create", "Department")" method="post">
                                 @Html.AntiForgeryToken()
-                                <div class="text-danger">@Html.ValidationSummary(true)</div>
+                                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
                                 
-                                <div class="form-group mb-3">
-                                    <label for="DepartmentName" class="form-label">Department Name</label>
-                                    @Html.TextBoxFor(m => m.DepartmentName, new { @class = "form-control", placeholder = "Enter department name" })
-                                    @Html.ValidationMessageFor(m => m.DepartmentName, "", new { @class = "text-danger" })
-                                </div>
-
-                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                    <a href="@Url.Action("Index", "Department")" class="btn btn-secondary me-md-2">
-                                        <i class="fas fa-times"></i>
-                                        Cancel
-                                    </a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save"></i>
-                                        Create Department
-                                    </button>
-                                </div>
+                                @await Html.PartialAsync("_DepartmentFormPartial", Model)
                             </form>
                         </div>
                     </div>
@@ -55,5 +46,5 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @await Html.PartialAsync("_ValidationScriptsPartial")
 }
