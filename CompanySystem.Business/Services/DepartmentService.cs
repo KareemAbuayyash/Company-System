@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using CompanySystem.Business.Interfaces;
 using CompanySystem.Data.Context;
 using CompanySystem.Data.Models;
+using CompanySystem.Business.DTOs;
 
 namespace CompanySystem.Business.Services
 {
@@ -21,7 +22,7 @@ namespace CompanySystem.Business.Services
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Department>> GetFilteredDepartmentsAsync(string searchTerm = null, string sortBy = "name")
+        public async Task<IEnumerable<Department>> GetFilteredDepartmentsAsync(string? searchTerm = null, string sortBy = "name")
         {
             var query = _context.Departments.AsQueryable();
 
@@ -49,7 +50,65 @@ namespace CompanySystem.Business.Services
             return await query.ToListAsync();
         }
 
-        public async Task<int> GetDepartmentCountAsync(string searchTerm = null)
+        public async Task<DepartmentSearchResultDto> GetDepartmentsForIndexAsync(string? searchTerm = null, string sortBy = "name")
+        {
+            var departments = await GetFilteredDepartmentsAsync(searchTerm, sortBy);
+            
+            var departmentDtos = departments.Select(d => new DepartmentDto
+            {
+                DepartmentId = d.DepartmentId,
+                DepartmentName = d.DepartmentName,
+                CreatedBy = d.CreatedBy,
+                CreatedDate = d.CreatedDate,
+                UpdatedBy = d.UpdatedBy,
+                UpdatedDate = d.UpdatedDate
+            }).ToList();
+
+            return new DepartmentSearchResultDto
+            {
+                Departments = departmentDtos,
+                TotalCount = departmentDtos.Count,
+                SearchTerm = searchTerm,
+                SortBy = sortBy,
+                HasSearch = !string.IsNullOrWhiteSpace(searchTerm)
+            };
+        }
+
+        public async Task<IEnumerable<DepartmentDto>> GetDepartmentsForSearchAsync(string? searchTerm = null, string sortBy = "name")
+        {
+            var departments = await GetFilteredDepartmentsAsync(searchTerm, sortBy);
+            
+            return departments.Select(d => new DepartmentDto
+            {
+                DepartmentId = d.DepartmentId,
+                DepartmentName = d.DepartmentName,
+                CreatedBy = d.CreatedBy,
+                CreatedDate = d.CreatedDate,
+                UpdatedBy = d.UpdatedBy,
+                UpdatedDate = d.UpdatedDate
+            }).ToList();
+        }
+
+        public async Task<DepartmentDto?> GetDepartmentDtoByIdAsync(int id)
+        {
+            var department = await _context.Departments
+                .FirstOrDefaultAsync(d => d.DepartmentId == id);
+
+            if (department == null)
+                return null;
+
+            return new DepartmentDto
+            {
+                DepartmentId = department.DepartmentId,
+                DepartmentName = department.DepartmentName,
+                CreatedBy = department.CreatedBy,
+                CreatedDate = department.CreatedDate,
+                UpdatedBy = department.UpdatedBy,
+                UpdatedDate = department.UpdatedDate
+            };
+        }
+
+        public async Task<int> GetDepartmentCountAsync(string? searchTerm = null)
         {
             var query = _context.Departments.AsQueryable();
 
@@ -70,32 +129,45 @@ namespace CompanySystem.Business.Services
                 .FirstOrDefaultAsync(d => d.DepartmentId == id);
         }
 
-        public async Task<Department> CreateDepartmentAsync(Department department)
+        public async Task<Department?> CreateDepartmentAsync(string departmentName)
         {
-            if (department == null)
-                throw new ArgumentNullException(nameof(department));
+            if (string.IsNullOrWhiteSpace(departmentName))
+                throw new ArgumentNullException(nameof(departmentName));
 
-            department.CreatedDate = DateTime.UtcNow;
-            department.IsDeleted = false;
+            // Check if department name already exists
+            if (await DepartmentNameExistsAsync(departmentName))
+                return null;
+
+            var department = new Department
+            {
+                DepartmentName = departmentName,
+                CreatedBy = "System", // Replace with actual user when authentication is implemented
+                CreatedDate = DateTime.UtcNow,
+                IsDeleted = false
+            };
 
             _context.Departments.Add(department);
             await _context.SaveChangesAsync();
             return department;
         }
 
-        public async Task<Department> UpdateDepartmentAsync(Department department)
+        public async Task<Department?> UpdateDepartmentAsync(int departmentId, string departmentName)
         {
-            if (department == null)
-                throw new ArgumentNullException(nameof(department));
+            if (string.IsNullOrWhiteSpace(departmentName))
+                throw new ArgumentNullException(nameof(departmentName));
+
+            // Check if department name already exists (excluding current department)
+            if (await DepartmentNameExistsAsync(departmentName, departmentId))
+                return null;
 
             var existingDepartment = await _context.Departments
-                .FirstOrDefaultAsync(d => d.DepartmentId == department.DepartmentId);
+                .FirstOrDefaultAsync(d => d.DepartmentId == departmentId);
 
             if (existingDepartment == null)
                 throw new InvalidOperationException("Department not found");
 
-            existingDepartment.DepartmentName = department.DepartmentName;
-            existingDepartment.UpdatedBy = department.UpdatedBy;
+            existingDepartment.DepartmentName = departmentName;
+            existingDepartment.UpdatedBy = "System"; // Replace with actual user when authentication is implemented
             existingDepartment.UpdatedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
