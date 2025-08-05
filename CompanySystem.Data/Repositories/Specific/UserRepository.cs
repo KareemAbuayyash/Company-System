@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using CompanySystem.Data.Data;
-using CompanySystem.Data.Models;
+using CompanySystem.Data.Entities;
 using CompanySystem.Data.Repositories.Generic;
 
 namespace CompanySystem.Data.Repositories.Specific
@@ -20,12 +20,12 @@ namespace CompanySystem.Data.Repositories.Specific
                 .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
         }
 
-        public async Task<User?> GetByEmployeeIdAsync(string employeeId)
+        public async Task<User?> GetBySerialNumberAsync(string serialNumber)
         {
-            if (string.IsNullOrWhiteSpace(employeeId)) return null;
+            if (string.IsNullOrWhiteSpace(serialNumber)) return null;
             
             return await _dbSet
-                .FirstOrDefaultAsync(u => u.EmployeeId == employeeId);
+                .FirstOrDefaultAsync(u => u.SerialNumber == serialNumber);
         }
 
         public async Task<User?> GetByEmailWithRoleAsync(string email)
@@ -45,21 +45,21 @@ namespace CompanySystem.Data.Repositories.Specific
             
             if (excludeUserId.HasValue)
             {
-                query = query.Where(u => u.UserId != excludeUserId.Value);
+                query = query.Where(u => u.Id != excludeUserId.Value);
             }
             
             return !await query.AnyAsync();
         }
 
-        public async Task<bool> IsEmployeeIdUniqueAsync(string employeeId, int? excludeUserId = null)
+        public async Task<bool> IsSerialNumberUniqueAsync(string serialNumber, int? excludeUserId = null)
         {
-            if (string.IsNullOrWhiteSpace(employeeId)) return false;
+            if (string.IsNullOrWhiteSpace(serialNumber)) return false;
             
-            var query = _dbSet.Where(u => u.EmployeeId == employeeId);
+            var query = _dbSet.Where(u => u.SerialNumber == serialNumber);
             
             if (excludeUserId.HasValue)
             {
-                query = query.Where(u => u.UserId != excludeUserId.Value);
+                query = query.Where(u => u.Id != excludeUserId.Value);
             }
             
             return !await query.AnyAsync();
@@ -101,9 +101,8 @@ namespace CompanySystem.Data.Repositories.Specific
             return await _dbSet
                 .Include(u => u.Role)
                 .Include(u => u.Department)
-                .Include(u => u.NotesAboutEmployee)
                 .Include(u => u.ManagedDepartments)
-                .FirstOrDefaultAsync(u => u.UserId == userId);
+                .FirstOrDefaultAsync(u => u.Id == userId);
         }
 
         public async Task<IEnumerable<User>> GetUsersWithDetailsAsync()
@@ -116,46 +115,7 @@ namespace CompanySystem.Data.Repositories.Specific
                 .ToListAsync();
         }
 
-        // Role-based queries using LINQ
-        public async Task<IEnumerable<User>> GetAdministratorsAsync()
-        {
-            return await _dbSet
-                .Where(u => u.Role.RoleName == Role.RoleNames.Administrator && u.IsActive)
-                .Include(u => u.Role)
-                .Include(u => u.Department)
-                .OrderBy(u => u.FirstName)
-                .ToListAsync();
-        }
 
-        public async Task<IEnumerable<User>> GetHRUsersAsync()
-        {
-            return await _dbSet
-                .Where(u => u.Role.RoleName == Role.RoleNames.HR && u.IsActive)
-                .Include(u => u.Role)
-                .Include(u => u.Department)
-                .OrderBy(u => u.FirstName)
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<User>> GetLeadsAsync()
-        {
-            return await _dbSet
-                .Where(u => u.Role.RoleName == Role.RoleNames.Lead && u.IsActive)
-                .Include(u => u.Role)
-                .Include(u => u.Department)
-                .OrderBy(u => u.FirstName)
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<User>> GetEmployeesAsync()
-        {
-            return await _dbSet
-                .Where(u => u.Role.RoleName == Role.RoleNames.Employee && u.IsActive)
-                .Include(u => u.Role)
-                .Include(u => u.Department)
-                .OrderBy(u => u.FirstName)
-                .ToListAsync();
-        }
 
         public async Task<IEnumerable<User>> GetUsersByRoleNameAsync(string roleName)
         {
@@ -186,7 +146,7 @@ namespace CompanySystem.Data.Repositories.Specific
             return await _dbSet
                 .Include(u => u.Role)
                 .Include(u => u.Department)
-                .FirstOrDefaultAsync(u => u.ManagedDepartments.Any(d => d.DepartmentId == departmentId) && u.IsActive);
+                .FirstOrDefaultAsync(u => u.ManagedDepartments.Any(d => d.Id == departmentId) && u.IsActive);
         }
 
         // Search and filter
@@ -201,7 +161,7 @@ namespace CompanySystem.Data.Repositories.Specific
                     u.FirstName.ToLower().Contains(lowerSearchTerm) ||
                     u.LastName.ToLower().Contains(lowerSearchTerm) ||
                     u.Email.ToLower().Contains(lowerSearchTerm) ||
-                    u.EmployeeId.ToLower().Contains(lowerSearchTerm)
+                    u.SerialNumber.ToLower().Contains(lowerSearchTerm)
                 ))
                 .Include(u => u.Role)
                 .Include(u => u.Department)

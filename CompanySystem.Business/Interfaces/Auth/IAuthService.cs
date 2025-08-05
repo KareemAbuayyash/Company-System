@@ -1,4 +1,5 @@
-using CompanySystem.Data.Models;
+using CompanySystem.Data.Entities;
+using CompanySystem.Business.DTOs.Auth;
 
 namespace CompanySystem.Business.Interfaces.Auth
 {
@@ -28,57 +29,5 @@ namespace CompanySystem.Business.Interfaces.Auth
         string HashPassword(string password);
         bool VerifyPassword(string password, string hashedPassword);
         string GenerateRandomPassword(int length = 12);
-    }
-
-    // Data Transfer Objects
-    public class AuthResult
-    {
-        public bool Success { get; set; }
-        public string Message { get; set; } = string.Empty;
-        public User? User { get; set; }
-        public string? Token { get; set; }
-        public DateTime? TokenExpiry { get; set; }
-    }
-
-    public class RegisterModel
-    {
-        public string EmployeeId { get; set; } = string.Empty;
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public string? PhoneNumber { get; set; }
-        public int RoleId { get; set; }
-        public int? DepartmentId { get; set; }
-        public DateTime HireDate { get; set; } = DateTime.UtcNow;
-        public decimal? Salary { get; set; }
-        public string? Skills { get; set; }
-        public string? Experience { get; set; }
-    }
-
-    public class LoginModel
-    {
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public bool RememberMe { get; set; } = false;
-    }
-
-    public class ChangePasswordModel
-    {
-        public string CurrentPassword { get; set; } = string.Empty;
-        public string NewPassword { get; set; } = string.Empty;
-        public string ConfirmPassword { get; set; } = string.Empty;
-    }
-
-    public class ResetPasswordModel
-    {
-        public string Email { get; set; } = string.Empty;
-    }
-
-    public class SetPasswordModel
-    {
-        public string Token { get; set; } = string.Empty;
-        public string NewPassword { get; set; } = string.Empty;
-        public string ConfirmPassword { get; set; } = string.Empty;
     }
 } 

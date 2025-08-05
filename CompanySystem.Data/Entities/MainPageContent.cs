@@ -2,15 +2,11 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using CompanySystem.Data.Enums;
 
-namespace CompanySystem.Data.Models
+namespace CompanySystem.Data.Entities
 {
     [Table("MainPageContent")]
-    public class MainPageContent
+    public class MainPageContent : BaseEntity
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int ContentId { get; set; }
-
         [Required]
         public SectionName SectionName { get; set; }
 
@@ -23,19 +19,13 @@ namespace CompanySystem.Data.Models
         [Column(TypeName = "nvarchar(max)")]
         public string Content { get; set; } = string.Empty;
 
-        [Column(TypeName = "datetime2")]
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-
-        [Required]
-        [Column(TypeName = "datetime2")]
-        public DateTime UpdatedDate { get; set; } = DateTime.UtcNow;
-
         // Foreign Key
         [Required]
-        [ForeignKey("UpdatedBy")]
+        [ForeignKey("UpdatedByUser")]
         public int UpdatedById { get; set; }
 
-        // Navigation Property
-        public virtual User UpdatedBy { get; set; } = null!;
+
+
+
     }
-}
+} 

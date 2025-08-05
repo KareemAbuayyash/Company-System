@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 using CompanySystem.Data.Data;
-using CompanySystem.Data.Models;
+using CompanySystem.Data.Entities;
 using CompanySystem.Data.Repositories.Generic;
 using CompanySystem.Data.Repositories.Specific;
 using CompanySystem.Business.Interfaces.Auth;
@@ -21,8 +20,8 @@ namespace CompanySystem.Web.Extensions
                     ServerVersion.AutoDetect(configuration.GetConnectionString("DefaultConnection")),
                     b => b.MigrationsAssembly("CompanySystem.Data")));
 
-            // Add Identity services
-            services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+            // Add Custom Password Hasher
+            services.AddScoped<IPasswordHasher, PasswordHasher>();
 
             // Add Generic Repository
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));

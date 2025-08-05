@@ -10,15 +10,9 @@ namespace CompanySystem.Data.Repositories.Generic
         Task<IEnumerable<T>> GetAllAsync();
         Task<IEnumerable<T>> GetWhereAsync(Expression<Func<T, bool>> predicate);
         
-        // Get with includes
-        Task<T?> GetByIdWithIncludesAsync(int id, params Expression<Func<T, object>>[] includes);
-        Task<T?> GetFirstOrDefaultWithIncludesAsync(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includes);
-        Task<IEnumerable<T>> GetAllWithIncludesAsync(params Expression<Func<T, object>>[] includes);
-        Task<IEnumerable<T>> GetWhereWithIncludesAsync(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includes);
 
-        // Pagination
-        Task<IEnumerable<T>> GetPagedAsync(int pageNumber, int pageSize);
-        Task<IEnumerable<T>> GetPagedWhereAsync(Expression<Func<T, bool>> predicate, int pageNumber, int pageSize);
+
+
 
         // Count methods
         Task<int> CountAsync();

@@ -1,16 +1,17 @@
-using Microsoft.AspNetCore.Identity;
 using CompanySystem.Data.Data;
-using CompanySystem.Data.Models;
+using CompanySystem.Data.Entities;
 using CompanySystem.Data.Enums;
+using CompanySystem.Business.Interfaces.Auth;
+using Microsoft.EntityFrameworkCore;
 
 namespace CompanySystem.Business.Services
 {
     public class InitializationService
     {
         private readonly CompanyDbContext _context;
-        private readonly IPasswordHasher<User> _passwordHasher;
+        private readonly IPasswordHasher _passwordHasher;
 
-        public InitializationService(CompanyDbContext context, IPasswordHasher<User> passwordHasher)
+        public InitializationService(CompanyDbContext context, IPasswordHasher passwordHasher)
         {
             _context = context;
             _passwordHasher = passwordHasher;
@@ -26,7 +27,7 @@ namespace CompanySystem.Business.Services
                 // Create admin user with secure password
                 var admin = new User
                 {
-                    EmployeeId = "ADMIN001",
+                    SerialNumber = "ADMIN001",
                     FirstName = "System",
                     LastName = "Administrator",
                     Email = "admin@company.com",
@@ -37,7 +38,7 @@ namespace CompanySystem.Business.Services
                 };
 
                 // Hash the password securely
-                admin.PasswordHash = _passwordHasher.HashPassword(admin, "Admin123!");
+                admin.PasswordHash = _passwordHasher.HashPassword("Admin123!");
 
                 await _context.Users.AddAsync(admin);
                 await _context.SaveChangesAsync();
@@ -50,7 +51,7 @@ namespace CompanySystem.Business.Services
                         SectionName = SectionName.Overview,
                         Title = "Company Overview",
                         Content = "Welcome to our company management system.",
-                        UpdatedById = admin.UserId,
+                        UpdatedById = admin.Id,
                         CreatedDate = DateTime.UtcNow,
                         UpdatedDate = DateTime.UtcNow
                     },
@@ -59,7 +60,7 @@ namespace CompanySystem.Business.Services
                         SectionName = SectionName.AboutUs,
                         Title = "About Us",
                         Content = "We are a leading company in our industry.",
-                        UpdatedById = admin.UserId,
+                        UpdatedById = admin.Id,
                         CreatedDate = DateTime.UtcNow,
                         UpdatedDate = DateTime.UtcNow
                     },
@@ -68,7 +69,7 @@ namespace CompanySystem.Business.Services
                         SectionName = SectionName.Services,
                         Title = "Our Services",
                         Content = "We provide comprehensive business solutions.",
-                        UpdatedById = admin.UserId,
+                        UpdatedById = admin.Id,
                         CreatedDate = DateTime.UtcNow,
                         UpdatedDate = DateTime.UtcNow
                     }

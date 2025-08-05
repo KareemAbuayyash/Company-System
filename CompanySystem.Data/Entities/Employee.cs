@@ -1,19 +1,15 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace CompanySystem.Data.Models
+namespace CompanySystem.Data.Entities
 {
-    [Table("Users")]
-    public class User
+    [Table("Employees")]
+    public class Employee : BaseEntity
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int UserId { get; set; }
-
         [Required]
         [StringLength(20)]
         [Column(TypeName = "nvarchar(20)")]
-        public string EmployeeId { get; set; } = string.Empty;
+        public string EmployeeCode { get; set; } = string.Empty;
 
         [Required]
         [StringLength(100)]
@@ -31,25 +27,27 @@ namespace CompanySystem.Data.Models
         [Column(TypeName = "nvarchar(255)")]
         public string Email { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(255)]
-        [Column(TypeName = "nvarchar(255)")]
-        public string PasswordHash { get; set; } = string.Empty;
-
         [StringLength(20)]
         [Column(TypeName = "nvarchar(20)")]
         public string? PhoneNumber { get; set; }
-
-        [StringLength(500)]
-        [Column(TypeName = "nvarchar(500)")]
-        public string? ProfilePhoto { get; set; }
 
         [Required]
         [Column(TypeName = "datetime2")]
         public DateTime HireDate { get; set; } = DateTime.UtcNow;
 
+        [Column(TypeName = "datetime2")]
+        public DateTime? TerminationDate { get; set; }
+
         [Column(TypeName = "decimal(18,2)")]
         public decimal? Salary { get; set; }
+
+        [StringLength(50)]
+        [Column(TypeName = "nvarchar(50)")]
+        public string? Position { get; set; }
+
+        [StringLength(50)]
+        [Column(TypeName = "nvarchar(50)")]
+        public string? EmploymentStatus { get; set; } = "Active";
 
         [Column(TypeName = "nvarchar(max)")]
         public string? Skills { get; set; }
@@ -57,14 +55,12 @@ namespace CompanySystem.Data.Models
         [Column(TypeName = "nvarchar(max)")]
         public string? Experience { get; set; }
 
+        [StringLength(500)]
+        [Column(TypeName = "nvarchar(500)")]
+        public string? ProfilePhoto { get; set; }
+
         [Required]
         public bool IsActive { get; set; } = true;
-
-        [Column(TypeName = "datetime2")]
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-
-        [Column(TypeName = "datetime2")]
-        public DateTime? UpdatedDate { get; set; }
 
         // Foreign Keys
         [Required]
@@ -74,21 +70,16 @@ namespace CompanySystem.Data.Models
         [ForeignKey("Department")]
         public int? DepartmentId { get; set; }
 
-        // Navigation Properties
-        public virtual Role Role { get; set; } = null!;
-        public virtual Department? Department { get; set; }
 
-        // Navigation Properties for related entities
-        public virtual ICollection<Note> NotesAboutEmployee { get; set; } = new HashSet<Note>();
-        public virtual ICollection<Note> NotesCreatedByEmployee { get; set; } = new HashSet<Note>();
-        public virtual ICollection<MainPageContent> ContentUpdates { get; set; } = new HashSet<MainPageContent>();
-        public virtual ICollection<Department> ManagedDepartments { get; set; } = new HashSet<Department>();
 
         // Computed Properties
         [NotMapped]
         public string FullName => $"{FirstName} {LastName}";
 
         [NotMapped]
-        public string DisplayName => $"{FullName} ({EmployeeId})";
+        public string DisplayName => $"{FullName} ({EmployeeCode})";
+
+        [NotMapped]
+        public bool IsTerminated => TerminationDate.HasValue;
     }
 } 

@@ -2,15 +2,11 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using CompanySystem.Data.Enums;
 
-namespace CompanySystem.Data.Models
+namespace CompanySystem.Data.Entities
 {
     [Table("Notes")]
-    public class Note
+    public class Note : BaseEntity
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int NoteId { get; set; }
-
         [Required]
         public NoteType NoteType { get; set; }
 
@@ -23,24 +19,17 @@ namespace CompanySystem.Data.Models
         [Column(TypeName = "nvarchar(max)")]
         public string Content { get; set; } = string.Empty;
 
-        [Required]
-        [Column(TypeName = "datetime2")]
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-
-        [Column(TypeName = "datetime2")]
-        public DateTime? UpdatedDate { get; set; }
-
         // Foreign Keys
         [Required]
         [ForeignKey("Employee")]
         public int EmployeeId { get; set; }
 
         [Required]
-        [ForeignKey("CreatedBy")]
+        [ForeignKey("CreatedByUser")]
         public int CreatedById { get; set; }
 
-        // Navigation Properties
-        public virtual User Employee { get; set; } = null!;
-        public virtual User CreatedBy { get; set; } = null!;
+
+
+
     }
 } 

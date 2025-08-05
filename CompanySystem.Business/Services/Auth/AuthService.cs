@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.AspNetCore.Identity;
 using CompanySystem.Business.Interfaces.Auth;
-using CompanySystem.Data.Models;
+using CompanySystem.Business.DTOs.Auth;
+using CompanySystem.Data.Entities;
 using CompanySystem.Data.Repositories.Specific;
 
 namespace CompanySystem.Business.Services.Auth
@@ -11,12 +11,12 @@ namespace CompanySystem.Business.Services.Auth
     {
         private readonly IUserRepository _userRepository;
         private readonly IRoleRepository _roleRepository;
-        private readonly IPasswordHasher<User> _passwordHasher;
+        private readonly IPasswordHasher _passwordHasher;
 
         public AuthService(
             IUserRepository userRepository,
             IRoleRepository roleRepository,
-            IPasswordHasher<User> passwordHasher)
+            IPasswordHasher passwordHasher)
         {
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _roleRepository = roleRepository ?? throw new ArgumentNullException(nameof(roleRepository));
@@ -97,7 +97,7 @@ namespace CompanySystem.Business.Services.Auth
                     string.IsNullOrWhiteSpace(model.Password) ||
                     string.IsNullOrWhiteSpace(model.FirstName) ||
                     string.IsNullOrWhiteSpace(model.LastName) ||
-                    string.IsNullOrWhiteSpace(model.EmployeeId))
+                    string.IsNullOrWhiteSpace(model.SerialNumber))
                 {
                     return new AuthResult
                     {
@@ -116,13 +116,13 @@ namespace CompanySystem.Business.Services.Auth
                     };
                 }
 
-                // Check if employee ID is unique
-                if (!await _userRepository.IsEmployeeIdUniqueAsync(model.EmployeeId))
+                // Check if serial number is unique
+                if (!await _userRepository.IsSerialNumberUniqueAsync(model.SerialNumber))
                 {
                     return new AuthResult
                     {
                         Success = false,
-                        Message = "Employee ID is already in use."
+                        Message = "Serial number is already in use."
                     };
                 }
 
@@ -140,7 +140,7 @@ namespace CompanySystem.Business.Services.Auth
                 // Create new user
                 var user = new User
                 {
-                    EmployeeId = model.EmployeeId,
+                    SerialNumber = model.SerialNumber,
                     FirstName = model.FirstName,
                     LastName = model.LastName,
                     Email = model.Email,
@@ -305,7 +305,7 @@ namespace CompanySystem.Business.Services.Auth
             // For now, return a simple hash-based token
             await Task.CompletedTask;
             
-            var tokenData = $"{user.UserId}:{user.Email}:{DateTime.UtcNow:yyyyMMddHHmmss}";
+            var tokenData = $"{user.Id}:{user.Email}:{DateTime.UtcNow:yyyyMMddHHmmss}";
             var tokenBytes = Encoding.UTF8.GetBytes(tokenData);
             var hashBytes = SHA256.HashData(tokenBytes);
             
@@ -332,8 +332,7 @@ namespace CompanySystem.Business.Services.Auth
             if (string.IsNullOrWhiteSpace(password))
                 throw new ArgumentException("Password cannot be null or empty.", nameof(password));
 
-            // Using ASP.NET Identity password hasher
-            return _passwordHasher.HashPassword(new User(), password);
+            return _passwordHasher.HashPassword(password);
         }
 
         public bool VerifyPassword(string password, string hashedPassword)
@@ -343,8 +342,7 @@ namespace CompanySystem.Business.Services.Auth
 
             try
             {
-                var result = _passwordHasher.VerifyHashedPassword(new User(), hashedPassword, password);
-                return result == PasswordVerificationResult.Success || result == PasswordVerificationResult.SuccessRehashNeeded;
+                return _passwordHasher.VerifyPassword(password, hashedPassword);
             }
             catch
             {

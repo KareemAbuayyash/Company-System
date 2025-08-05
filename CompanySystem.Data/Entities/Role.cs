@@ -1,15 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace CompanySystem.Data.Models
+namespace CompanySystem.Data.Entities
 {
     [Table("Roles")]
-    public class Role
+    public class Role : BaseEntity
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int RoleId { get; set; }
-
         [Required]
         [StringLength(50)]
         [Column(TypeName = "nvarchar(50)")]
@@ -17,6 +13,8 @@ namespace CompanySystem.Data.Models
 
         // Navigation Properties
         public virtual ICollection<User> Users { get; set; } = new HashSet<User>();
+
+
 
         // Predefined role names as constants
         public static class RoleNames

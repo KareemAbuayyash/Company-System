@@ -1,4 +1,4 @@
-using CompanySystem.Data.Models;
+using CompanySystem.Data.Entities;
 using CompanySystem.Data.Repositories.Generic;
 
 namespace CompanySystem.Data.Repositories.Specific
@@ -7,10 +7,10 @@ namespace CompanySystem.Data.Repositories.Specific
     {
         // Authentication related methods
         Task<User?> GetByEmailAsync(string email);
-        Task<User?> GetByEmployeeIdAsync(string employeeId);
+        Task<User?> GetBySerialNumberAsync(string serialNumber);
         Task<User?> GetByEmailWithRoleAsync(string email);
         Task<bool> IsEmailUniqueAsync(string email, int? excludeUserId = null);
-        Task<bool> IsEmployeeIdUniqueAsync(string employeeId, int? excludeUserId = null);
+        Task<bool> IsSerialNumberUniqueAsync(string serialNumber, int? excludeUserId = null);
         
         // User management methods
         Task<IEnumerable<User>> GetActiveUsersAsync();
@@ -19,11 +19,7 @@ namespace CompanySystem.Data.Repositories.Specific
         Task<User?> GetUserWithDetailsAsync(int userId);
         Task<IEnumerable<User>> GetUsersWithDetailsAsync();
         
-        // Role-based queries using LINQ
-        Task<IEnumerable<User>> GetAdministratorsAsync();
-        Task<IEnumerable<User>> GetHRUsersAsync();
-        Task<IEnumerable<User>> GetLeadsAsync();
-        Task<IEnumerable<User>> GetEmployeesAsync();
+
         Task<IEnumerable<User>> GetUsersByRoleNameAsync(string roleName);
         
         // Department management

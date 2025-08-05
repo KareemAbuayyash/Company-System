@@ -1,4 +1,4 @@
-using CompanySystem.Data.Models;
+using CompanySystem.Data.Entities;
 using CompanySystem.Data.Repositories.Generic;
 
 namespace CompanySystem.Data.Repositories.Specific
@@ -17,10 +17,6 @@ namespace CompanySystem.Data.Repositories.Specific
         Task<int> GetUserCountByRoleAsync(int roleId);
         Task<Dictionary<string, int>> GetUserCountByAllRolesAsync();
         
-        // Predefined role helpers
-        Task<Role?> GetAdministratorRoleAsync();
-        Task<Role?> GetHRRoleAsync();
-        Task<Role?> GetLeadRoleAsync();
-        Task<Role?> GetEmployeeRoleAsync();
+
     }
 } 

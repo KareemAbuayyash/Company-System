@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using CompanySystem.Data.Data;
-using CompanySystem.Data.Models;
+using CompanySystem.Data.Entities;
 using CompanySystem.Data.Repositories.Generic;
 
 namespace CompanySystem.Data.Repositories.Specific
@@ -28,7 +28,7 @@ namespace CompanySystem.Data.Repositories.Specific
             
             if (excludeRoleId.HasValue)
             {
-                query = query.Where(r => r.RoleId != excludeRoleId.Value);
+                query = query.Where(r => r.Id != excludeRoleId.Value);
             }
             
             return !await query.AnyAsync();
@@ -39,7 +39,7 @@ namespace CompanySystem.Data.Repositories.Specific
         {
             return await _dbSet
                 .Include(r => r.Users.Where(u => u.IsActive))
-                .FirstOrDefaultAsync(r => r.RoleId == roleId);
+                .FirstOrDefaultAsync(r => r.Id == roleId);
         }
 
         public async Task<IEnumerable<Role>> GetRolesWithUsersAsync()
@@ -64,25 +64,6 @@ namespace CompanySystem.Data.Repositories.Specific
                 .ToDictionaryAsync(x => x.RoleName, x => x.UserCount);
         }
 
-        // Predefined role helpers
-        public async Task<Role?> GetAdministratorRoleAsync()
-        {
-            return await GetByNameAsync(Role.RoleNames.Administrator);
-        }
 
-        public async Task<Role?> GetHRRoleAsync()
-        {
-            return await GetByNameAsync(Role.RoleNames.HR);
-        }
-
-        public async Task<Role?> GetLeadRoleAsync()
-        {
-            return await GetByNameAsync(Role.RoleNames.Lead);
-        }
-
-        public async Task<Role?> GetEmployeeRoleAsync()
-        {
-            return await GetByNameAsync(Role.RoleNames.Employee);
-        }
     }
 } 
