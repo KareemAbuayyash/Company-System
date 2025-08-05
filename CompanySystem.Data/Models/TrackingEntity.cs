@@ -6,7 +6,7 @@ namespace CompanySystem.Data.Models
     {
         [Required]
         [StringLength(100)]
-        public string CreatedBy { get; set; } = string.Empty;
+        public string CreatedBy { get; set; }
 
         [Required]
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
