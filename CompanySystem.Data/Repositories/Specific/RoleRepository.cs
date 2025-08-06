@@ -11,8 +11,8 @@ namespace CompanySystem.Data.Repositories.Specific
         {
         }
 
-        // Role-specific methods
-        public async Task<Role?> GetByNameAsync(string roleName)
+        // Role-specific methods that use RoleName property
+        public async Task<Role?> GetByRoleNameAsync(string roleName)
         {
             if (string.IsNullOrWhiteSpace(roleName)) return null;
             
@@ -34,7 +34,7 @@ namespace CompanySystem.Data.Repositories.Specific
             return !await query.AnyAsync();
         }
 
-        // Role with users
+        // Role with users (specific to Role entity)
         public async Task<Role?> GetRoleWithUsersAsync(int roleId)
         {
             return await _dbSet
@@ -50,7 +50,7 @@ namespace CompanySystem.Data.Repositories.Specific
                 .ToListAsync();
         }
 
-        // Statistical methods
+        // Statistical methods (specific to Role entity)
         public async Task<int> GetUserCountByRoleAsync(int roleId)
         {
             return await _context.Users
@@ -63,7 +63,5 @@ namespace CompanySystem.Data.Repositories.Specific
                 .Select(r => new { r.RoleName, UserCount = r.Users.Count(u => u.IsActive) })
                 .ToDictionaryAsync(x => x.RoleName, x => x.UserCount);
         }
-
-
     }
 } 
