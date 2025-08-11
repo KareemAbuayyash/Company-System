@@ -18,6 +18,7 @@ builder.Services.AddDbContext<CompanySystemDbContext>(options =>
 // Register business services
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IMainPageContentService, MainPageContentService>();
+builder.Services.AddScoped<INoteService, NoteService>();
 
 var app = builder.Build();
 

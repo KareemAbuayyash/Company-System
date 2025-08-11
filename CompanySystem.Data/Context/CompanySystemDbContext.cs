@@ -11,6 +11,7 @@ namespace CompanySystem.Data.Context
 
         public DbSet<Department> Departments { get; set; }
         public DbSet<MainPageContent> MainPageContents { get; set; }
+        public DbSet<Note> Notes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -40,8 +41,25 @@ namespace CompanySystem.Data.Context
                 entity.HasIndex(e => e.SectionName);
             });
 
+            modelBuilder.Entity<Note>(entity =>
+            {
+                entity.HasKey(e => e.NoteId);
+                entity.Property(e => e.NoteId).ValueGeneratedOnAdd();
+                entity.Property(e => e.EmployeeId).IsRequired();
+                entity.Property(e => e.NoteType).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Content).IsRequired().HasColumnType("TEXT");
+                entity.Property(e => e.CreatedBy).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.UpdatedBy).HasMaxLength(100);
+                
+                entity.HasIndex(e => e.EmployeeId);
+                entity.HasIndex(e => e.NoteType);
+                entity.HasIndex(e => e.CreatedBy);
+            });
+
             modelBuilder.Entity<Department>().HasQueryFilter(e => !e.IsDeleted);
             modelBuilder.Entity<MainPageContent>().HasQueryFilter(e => !e.IsDeleted);
+            modelBuilder.Entity<Note>().HasQueryFilter(e => !e.IsDeleted);
 
             SeedData(modelBuilder);
         }

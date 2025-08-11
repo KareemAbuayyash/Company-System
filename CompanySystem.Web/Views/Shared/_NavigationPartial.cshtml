@@ -33,6 +33,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Note" ? "active" : "")" 
+                       href="@Url.Action("Index", "Note")">
+                        <i class="fas fa-sticky-note me-1"></i>
+                        Notes
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "About" ? "active" : "")" 
                        href="@Url.Action("About", "Home")">
                         <i class="fas fa-info-circle me-1"></i>
