@@ -14,13 +14,13 @@ namespace CompanySystem.Business.DTOs
 
     public class CreateDepartmentDto
     {
-        public string DepartmentName { get; set; } = string.Empty;
+        public string DepartmentName { get; set; }
     }
 
     public class EditDepartmentDto
     {
         public int DepartmentId { get; set; }
-        public string DepartmentName { get; set; } = string.Empty;
+        public string DepartmentName { get; set; }
     }
 
     public class DepartmentSearchResultDto

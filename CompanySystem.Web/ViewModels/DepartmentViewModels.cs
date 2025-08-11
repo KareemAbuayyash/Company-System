@@ -9,7 +9,7 @@ namespace CompanySystem.Web.ViewModels
         [Required(ErrorMessage = "Department name is required")]
         [StringLength(200, ErrorMessage = "Department name cannot exceed 200 characters")]
         [Display(Name = "Department Name")]
-        public string DepartmentName { get; set; } = string.Empty;
+        public string DepartmentName { get; set; }
 
         [Display(Name = "Created By")]
         public string CreatedBy { get; set; } = string.Empty;
@@ -29,7 +29,7 @@ namespace CompanySystem.Web.ViewModels
         [Required(ErrorMessage = "Department name is required")]
         [StringLength(200, ErrorMessage = "Department name cannot exceed 200 characters")]
         [Display(Name = "Department Name")]
-        public string DepartmentName { get; set; } = string.Empty;
+        public string DepartmentName { get; set; }
     }
 
     public class EditDepartmentViewModel
@@ -39,6 +39,6 @@ namespace CompanySystem.Web.ViewModels
         [Required(ErrorMessage = "Department name is required")]
         [StringLength(200, ErrorMessage = "Department name cannot exceed 200 characters")]
         [Display(Name = "Department Name")]
-        public string DepartmentName { get; set; } = string.Empty;
+        public string DepartmentName { get; set; }
     }
 }
