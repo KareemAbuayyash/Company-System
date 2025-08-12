@@ -1,0 +1,41 @@
+<!-- Simple jQuery Validation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Basic validation styling
+        $.validator.setDefaults({
+            highlight: function(element) {
+                $(element).addClass('is-invalid').removeClass('is-valid');
+            },
+            unhighlight: function(element) {
+                $(element).removeClass('is-invalid').addClass('is-valid');
+            },
+            errorElement: 'div',
+            errorClass: 'invalid-feedback',
+            errorPlacement: function(error, element) {
+                error.insertAfter(element);
+            }
+        });
+
+        // Prevent double form submission
+        $('form').on('submit', function() {
+            const form = $(this);
+            const submitButton = form.find('button[type="submit"]');
+            
+            if (form.data('submitted') === true) {
+                return false;
+            }
+            
+            form.data('submitted', true);
+            submitButton.prop('disabled', true);
+            
+            // Re-enable after 3 seconds
+            setTimeout(function() {
+                form.data('submitted', false);
+                submitButton.prop('disabled', false);
+            }, 3000);
+        });
+    });
+</script>

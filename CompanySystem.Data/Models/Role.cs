@@ -1,20 +1,15 @@
+// CompanySystem.Data/Models/Role.cs
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace CompanySystem.Data.Entities
+namespace CompanySystem.Data.Models
 {
     [Table("Roles")]
     public class Role : BaseEntity
     {
         [Required]
         [StringLength(50)]
-        [Column(TypeName = "nvarchar(50)")]
         public string RoleName { get; set; } = string.Empty;
-
-        // Navigation Properties
-        public virtual ICollection<User> Users { get; set; } = new HashSet<User>();
-
-
 
         // Predefined role names as constants
         public static class RoleNames
@@ -25,4 +20,4 @@ namespace CompanySystem.Data.Entities
             public const string Employee = "Employee";
         }
     }
-} 
+}

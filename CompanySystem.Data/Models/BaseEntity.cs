@@ -1,6 +1,7 @@
+// CompanySystem.Data/Models/BaseEntity.cs
 using System.ComponentModel.DataAnnotations;
 
-namespace CompanySystem.Data.Entities
+namespace CompanySystem.Data.Models
 {
     public abstract class BaseEntity<TKey> where TKey : IEquatable<TKey>
     {
@@ -15,7 +16,6 @@ namespace CompanySystem.Data.Entities
         [Required]
         public bool IsDeleted { get; set; } = false;
 
-        // Audit fields
         [StringLength(100)]
         public string? CreatedBy { get; set; }
 
@@ -27,4 +27,4 @@ namespace CompanySystem.Data.Entities
     public abstract class BaseEntity : BaseEntity<int>
     {
     }
-} 
+}

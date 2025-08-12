@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace CompanySystem.Data.Entities
+namespace CompanySystem.Data.Models
 {
     [Table("Departments")]
     public class Department : BaseEntity
@@ -20,4 +20,4 @@ namespace CompanySystem.Data.Entities
         public int? ManagerId { get; set; }
         
     }
-} 
+}

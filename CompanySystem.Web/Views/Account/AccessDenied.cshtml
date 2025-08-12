@@ -1,0 +1,334 @@
+@{
+    ViewData["Title"] = "Access Denied";
+}
+
+<style>
+    .access-denied-container {
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .access-denied-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        padding: 3rem 2rem;
+        max-width: 500px;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .access-denied-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, #dc3545, #fd7e14, #ffc107);
+    }
+
+    .error-icon {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #dc3545, #fd7e14);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .error-code {
+        font-size: 4rem;
+        font-weight: bold;
+        background: linear-gradient(135deg, #dc3545, #fd7e14);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
+    }
+
+    .btn-action {
+        border-radius: 25px;
+        padding: 0.8rem 2rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin: 0.5rem;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .btn-primary-custom {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    .btn-secondary-custom {
+        background: linear-gradient(135deg, #6c757d, #495057);
+        color: white;
+    }
+
+    .btn-secondary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        color: white;
+    }
+
+    .btn-logout-custom {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+    }
+
+    .btn-logout-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+        color: white;
+    }
+
+    .info-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-top: 2rem;
+        border-left: 4px solid #dc3545;
+    }
+
+    .user-info {
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-left: 4px solid #667eea;
+    }
+
+    .help-links {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .help-link {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 500;
+        margin: 0 1rem;
+        transition: color 0.3s ease;
+    }
+
+    .help-link:hover {
+        color: #764ba2;
+        text-decoration: underline;
+    }
+</style>
+
+<div class="access-denied-container">
+    <div class="access-denied-card">
+        <div class="error-icon">
+            <i class="fas fa-shield-alt fa-3x text-white"></i>
+        </div>
+        
+        <div class="error-code">403</div>
+        
+        <h2 class="text-danger mb-3">Access Denied</h2>
+        
+        <p class="lead text-muted mb-4">
+            Sorry, you don't have permission to access this resource.
+        </p>
+
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <div class="user-info">
+                <h6><i class="fas fa-user"></i> Current User Information</h6>
+                <p class="mb-1"><strong>Name:</strong> @User.Identity.Name</p>
+                <p class="mb-1"><strong>Role:</strong> @(User.FindFirst("Role")?.Value ?? "Not assigned")</p>
+                <p class="mb-0"><strong>User ID:</strong> @(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "Unknown")</p>
+            </div>
+
+            <div class="info-section">
+                <h6><i class="fas fa-info-circle text-danger"></i> What can you do?</h6>
+                <ul class="text-start">
+                    <li>Contact your system administrator to request access</li>
+                    <li>Verify you're logged in with the correct account</li>
+                    <li>Check if your role has the required permissions</li>
+                    <li>Return to a page you have access to</li>
+                </ul>
+            </div>
+
+            <div class="mt-4">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-action btn-primary-custom">
+                    <i class="fas fa-home"></i> Go to Dashboard
+                </a>
+                <a asp-controller="User" asp-action="Profile" class="btn btn-action btn-secondary-custom">
+                    <i class="fas fa-user"></i> My Profile
+                </a>
+            </div>
+
+            <div class="mt-3">
+                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline" id="logoutForm">
+                    <button type="submit" class="btn btn-action btn-logout-custom">
+                        <i class="fas fa-sign-out-alt"></i> Logout & Login as Different User
+                    </button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div class="info-section">
+                <h6><i class="fas fa-info-circle text-warning"></i> You are not logged in</h6>
+                <p class="mb-0">Please log in with an account that has the required permissions to access this resource.</p>
+            </div>
+
+            <div class="mt-4">
+                <a asp-controller="Account" asp-action="Login" class="btn btn-action btn-primary-custom">
+                    <i class="fas fa-sign-in-alt"></i> Login to System
+                </a>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-action btn-secondary-custom">
+                    <i class="fas fa-home"></i> Go to Home
+                </a>
+            </div>
+        }
+
+        <div class="help-links">
+            <h6 class="mb-3">Need Help?</h6>
+            <a href="mailto:admin@company.com" class="help-link">
+                <i class="fas fa-envelope"></i> Contact Admin
+            </a>
+            <a href="javascript:void(0)" onclick="showHelpInfo()" class="help-link">
+                <i class="fas fa-question-circle"></i> Help & Support
+            </a>
+            <a href="javascript:history.back()" class="help-link">
+                <i class="fas fa-arrow-left"></i> Go Back
+            </a>
+        </div>
+
+        <div class="mt-4">
+            <small class="text-muted">
+                <i class="fas fa-clock"></i> 
+                Occurred at: @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+            </small>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Add animation to the error icon
+            $('.error-icon').addClass('animate__animated animate__bounceIn');
+
+            // Logout confirmation
+            $('#logoutForm').submit(function(e) {
+                e.preventDefault();
+                
+                if (confirm('Are you sure you want to logout and login as a different user?')) {
+                    showLoading();
+                    this.submit();
+                }
+            });
+
+            // Add hover effects
+            $('.btn-action').hover(
+                function() {
+                    $(this).find('i').addClass('fa-bounce');
+                },
+                function() {
+                    $(this).find('i').removeClass('fa-bounce');
+                }
+            );
+
+            // Auto-focus on primary action button
+            $('.btn-primary-custom').first().focus();
+        });
+
+        function showHelpInfo() {
+            const helpInfo = `
+                Access Denied - Error 403
+
+                This error occurs when you try to access a resource that requires higher permissions than your current user account has.
+
+                Common Reasons:
+                • Your user role doesn't have permission to access this feature
+                • You're not logged in with the correct account
+                • Your account permissions may have changed recently
+                • The resource requires administrator access
+
+                What to do:
+                1. Contact your system administrator
+                2. Verify you're using the correct account
+                3. Check if you need additional permissions
+                4. Try logging out and back in
+
+                Contact Information:
+                • Email: admin@company.com
+                • System: Company Management System
+                • Time: ${new Date().toLocaleString()}
+            `;
+
+            alert(helpInfo);
+        }
+
+        function reportAccessIssue() {
+            const issueData = {
+                'User': '@(User.Identity?.Name ?? "Not logged in")',
+                'Role': '@(User.FindFirst("Role")?.Value ?? "No role")',
+                'URL': window.location.href,
+                'Time': new Date().toISOString(),
+                'User Agent': navigator.userAgent
+            };
+
+            console.log('Access Denied Issue:', issueData);
+            
+            // In a real application, you would send this to your logging system
+            alert('Issue reported. Please contact your administrator with the following details:\n\n' + JSON.stringify(issueData, null, 2));
+        }
+
+        // Add keyboard navigation
+        $(document).keydown(function(e) {
+            switch(e.which) {
+                case 72: // H key
+                    if (e.ctrlKey) {
+                        e.preventDefault();
+                        window.location.href = '@Url.Action("Index", "Home")';
+                    }
+                    break;
+                case 76: // L key
+                    if (e.ctrlKey) {
+                        e.preventDefault();
+                        window.location.href = '@Url.Action("Login", "Account")';
+                    }
+                    break;
+                case 27: // Escape key
+                    history.back();
+                    break;
+            }
+        });
+
+        // Show keyboard shortcuts hint
+        setTimeout(function() {
+            if (!sessionStorage.getItem('access-denied-help-shown')) {
+                const hint = 'Keyboard shortcuts:\n• Ctrl+H: Go to Home\n• Ctrl+L: Login\n• Escape: Go Back';
+                console.log(hint);
+                sessionStorage.setItem('access-denied-help-shown', 'true');
+            }
+        }, 2000);
+    </script>
+}

@@ -1,11 +1,12 @@
+// CompanySystem.Data/Repositories/Generic/GenericRepository.cs
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using CompanySystem.Data.Data;
-using System.Reflection;
+using CompanySystem.Data.Models;
 
 namespace CompanySystem.Data.Repositories.Generic
 {
-    public class GenericRepository<T> : IGenericRepository<T> where T : class
+    public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
     {
         protected readonly CompanyDbContext _context;
         protected readonly DbSet<T> _dbSet;
@@ -16,7 +17,7 @@ namespace CompanySystem.Data.Repositories.Generic
             _dbSet = _context.Set<T>();
         }
 
-        // Basic CRUD methods
+        // Basic CRUD methods (uses query filter - excludes deleted)
         public virtual async Task<T?> GetByIdAsync(int id)
         {
             try
@@ -33,7 +34,7 @@ namespace CompanySystem.Data.Repositories.Generic
         {
             try
             {
-                return await _dbSet.FirstOrDefaultAsync(predicate);
+                return await _dbSet.AsNoTracking().FirstOrDefaultAsync(predicate);
             }
             catch (Exception)
             {
@@ -45,7 +46,7 @@ namespace CompanySystem.Data.Repositories.Generic
         {
             try
             {
-                return await _dbSet.ToListAsync();
+                return await _dbSet.AsNoTracking().ToListAsync();
             }
             catch (Exception)
             {
@@ -57,7 +58,57 @@ namespace CompanySystem.Data.Repositories.Generic
         {
             try
             {
-                return await _dbSet.Where(predicate).ToListAsync();
+                return await _dbSet.AsNoTracking().Where(predicate).ToListAsync();
+            }
+            catch (Exception)
+            {
+                return Enumerable.Empty<T>();
+            }
+        }
+
+        // Include deleted methods (bypass query filter)
+        public virtual async Task<T?> GetByIdIncludeDeletedAsync(int id)
+        {
+            try
+            {
+                return await _dbSet.IgnoreQueryFilters().AsNoTracking()
+                    .FirstOrDefaultAsync(e => e.Id == id);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public virtual async Task<T?> GetFirstOrDefaultIncludeDeletedAsync(Expression<Func<T, bool>> predicate)
+        {
+            try
+            {
+                return await _dbSet.IgnoreQueryFilters().AsNoTracking().FirstOrDefaultAsync(predicate);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public virtual async Task<IEnumerable<T>> GetAllIncludeDeletedAsync()
+        {
+            try
+            {
+                return await _dbSet.IgnoreQueryFilters().AsNoTracking().ToListAsync();
+            }
+            catch (Exception)
+            {
+                return Enumerable.Empty<T>();
+            }
+        }
+
+        public virtual async Task<IEnumerable<T>> GetWhereIncludeDeletedAsync(Expression<Func<T, bool>> predicate)
+        {
+            try
+            {
+                return await _dbSet.IgnoreQueryFilters().AsNoTracking().Where(predicate).ToListAsync();
             }
             catch (Exception)
             {
@@ -90,6 +141,30 @@ namespace CompanySystem.Data.Repositories.Generic
             }
         }
 
+        public virtual async Task<int> CountIncludeDeletedAsync()
+        {
+            try
+            {
+                return await _dbSet.IgnoreQueryFilters().CountAsync();
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
+        }
+
+        public virtual async Task<int> CountWhereIncludeDeletedAsync(Expression<Func<T, bool>> predicate)
+        {
+            try
+            {
+                return await _dbSet.IgnoreQueryFilters().CountAsync(predicate);
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
+        }
+
         // Existence check
         public virtual async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
         {
@@ -103,13 +178,26 @@ namespace CompanySystem.Data.Repositories.Generic
             }
         }
 
+        public virtual async Task<bool> ExistsIncludeDeletedAsync(Expression<Func<T, bool>> predicate)
+        {
+            try
+            {
+                return await _dbSet.IgnoreQueryFilters().AnyAsync(predicate);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         // Add methods
-        public virtual async Task<T> AddAsync(T entity)
+        public virtual async Task<T> AddAsync(T entity, string? createdBy = null)
         {
             if (entity == null) throw new ArgumentNullException(nameof(entity));
 
             try
             {
+                SetAuditFields(entity, createdBy, false);
                 await _dbSet.AddAsync(entity);
                 return entity;
             }
@@ -119,14 +207,19 @@ namespace CompanySystem.Data.Repositories.Generic
             }
         }
 
-        public virtual async Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities)
+        public virtual async Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities, string? createdBy = null)
         {
             if (entities == null) throw new ArgumentNullException(nameof(entities));
 
             try
             {
-                await _dbSet.AddRangeAsync(entities);
-                return entities;
+                var entityList = entities.ToList();
+                foreach (var entity in entityList)
+                {
+                    SetAuditFields(entity, createdBy, false);
+                }
+                await _dbSet.AddRangeAsync(entityList);
+                return entityList;
             }
             catch (Exception)
             {
@@ -135,12 +228,13 @@ namespace CompanySystem.Data.Repositories.Generic
         }
 
         // Update methods
-        public virtual async Task<T> UpdateAsync(T entity)
+        public virtual async Task<T> UpdateAsync(T entity, string? updatedBy = null)
         {
             if (entity == null) throw new ArgumentNullException(nameof(entity));
 
             try
             {
+                SetAuditFields(entity, updatedBy, true);
                 _dbSet.Update(entity);
                 return await Task.FromResult(entity);
             }
@@ -150,14 +244,19 @@ namespace CompanySystem.Data.Repositories.Generic
             }
         }
 
-        public virtual async Task<IEnumerable<T>> UpdateRangeAsync(IEnumerable<T> entities)
+        public virtual async Task<IEnumerable<T>> UpdateRangeAsync(IEnumerable<T> entities, string? updatedBy = null)
         {
             if (entities == null) throw new ArgumentNullException(nameof(entities));
 
             try
             {
-                _dbSet.UpdateRange(entities);
-                return await Task.FromResult(entities);
+                var entityList = entities.ToList();
+                foreach (var entity in entityList)
+                {
+                    SetAuditFields(entity, updatedBy, true);
+                }
+                _dbSet.UpdateRange(entityList);
+                return await Task.FromResult(entityList);
             }
             catch (Exception)
             {
@@ -165,12 +264,12 @@ namespace CompanySystem.Data.Repositories.Generic
             }
         }
 
-        // Delete methods
+        // Delete methods (hard delete)
         public virtual async Task<bool> DeleteAsync(int id)
         {
             try
             {
-                var entity = await GetByIdAsync(id);
+                var entity = await GetByIdIncludeDeletedAsync(id);
                 if (entity == null) return false;
 
                 _dbSet.Remove(entity);
@@ -212,6 +311,93 @@ namespace CompanySystem.Data.Repositories.Generic
             }
         }
 
+        // Soft delete methods
+        public virtual async Task<bool> SoftDeleteAsync(int id, string? deletedBy = null)
+        {
+            try
+            {
+                var entity = await GetByIdIncludeDeletedAsync(id);
+                if (entity == null) return false;
+
+                SetSoftDeleteFields(entity, deletedBy, true);
+                _dbSet.Update(entity);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public virtual async Task<bool> SoftDeleteAsync(T entity, string? deletedBy = null)
+        {
+            if (entity == null) return false;
+
+            try
+            {
+                SetSoftDeleteFields(entity, deletedBy, true);
+                _dbSet.Update(entity);
+                return await Task.FromResult(true);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public virtual async Task<bool> SoftDeleteRangeAsync(IEnumerable<T> entities, string? deletedBy = null)
+        {
+            if (entities == null || !entities.Any()) return false;
+
+            try
+            {
+                var entityList = entities.ToList();
+                foreach (var entity in entityList)
+                {
+                    SetSoftDeleteFields(entity, deletedBy, true);
+                }
+                _dbSet.UpdateRange(entityList);
+                return await Task.FromResult(true);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public virtual async Task<bool> RestoreAsync(int id, string? restoredBy = null)
+        {
+            try
+            {
+                var entity = await GetByIdIncludeDeletedAsync(id);
+                if (entity == null) return false;
+
+                SetSoftDeleteFields(entity, restoredBy, false);
+                _dbSet.Update(entity);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public virtual async Task<bool> RestoreAsync(T entity, string? restoredBy = null)
+        {
+            if (entity == null) return false;
+
+            try
+            {
+                SetSoftDeleteFields(entity, restoredBy, false);
+                _dbSet.Update(entity);
+                return await Task.FromResult(true);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         // Save changes
         public virtual async Task<bool> SaveChangesAsync()
         {
@@ -226,312 +412,7 @@ namespace CompanySystem.Data.Repositories.Generic
             }
         }
 
-        // Generic authentication methods (for entities with Email/SerialNumber properties)
-        public virtual async Task<T?> GetByEmailAsync(string email)
-        {
-            if (string.IsNullOrWhiteSpace(email)) return null;
-
-            try
-            {
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var emailProperty = Expression.Property(parameter, "Email");
-                var toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
-                var toLowerCall = Expression.Call(emailProperty, toLowerMethod!);
-                var emailConstant = Expression.Constant(email.ToLower());
-                var equal = Expression.Equal(toLowerCall, emailConstant);
-                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
-
-                return await _dbSet.FirstOrDefaultAsync(lambda);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
-        public virtual async Task<T?> GetBySerialNumberAsync(string serialNumber)
-        {
-            if (string.IsNullOrWhiteSpace(serialNumber)) return null;
-
-            try
-            {
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var serialNumberProperty = Expression.Property(parameter, "SerialNumber");
-                var serialNumberConstant = Expression.Constant(serialNumber);
-                var equal = Expression.Equal(serialNumberProperty, serialNumberConstant);
-                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
-
-                return await _dbSet.FirstOrDefaultAsync(lambda);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
-        public virtual async Task<bool> IsEmailUniqueAsync(string email, int? excludeId = null)
-        {
-            if (string.IsNullOrWhiteSpace(email)) return false;
-
-            try
-            {
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var emailProperty = Expression.Property(parameter, "Email");
-                var toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
-                var toLowerCall = Expression.Call(emailProperty, toLowerMethod!);
-                var emailConstant = Expression.Constant(email.ToLower());
-                var equal = Expression.Equal(toLowerCall, emailConstant);
-                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
-
-                var query = _dbSet.Where(lambda);
-
-                if (excludeId.HasValue)
-                {
-                    var idProperty = Expression.Property(parameter, "Id");
-                    var idConstant = Expression.Constant(excludeId.Value);
-                    var idNotEqual = Expression.NotEqual(idProperty, idConstant);
-                    var combined = Expression.AndAlso(equal, idNotEqual);
-                    var combinedLambda = Expression.Lambda<Func<T, bool>>(combined, parameter);
-                    query = _dbSet.Where(combinedLambda);
-                }
-
-                return !await query.AnyAsync();
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-
-        public virtual async Task<bool> IsSerialNumberUniqueAsync(string serialNumber, int? excludeId = null)
-        {
-            if (string.IsNullOrWhiteSpace(serialNumber)) return false;
-
-            try
-            {
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var serialNumberProperty = Expression.Property(parameter, "SerialNumber");
-                var serialNumberConstant = Expression.Constant(serialNumber);
-                var equal = Expression.Equal(serialNumberProperty, serialNumberConstant);
-                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
-
-                var query = _dbSet.Where(lambda);
-
-                if (excludeId.HasValue)
-                {
-                    var idProperty = Expression.Property(parameter, "Id");
-                    var idConstant = Expression.Constant(excludeId.Value);
-                    var idNotEqual = Expression.NotEqual(idProperty, idConstant);
-                    var combined = Expression.AndAlso(equal, idNotEqual);
-                    var combinedLambda = Expression.Lambda<Func<T, bool>>(combined, parameter);
-                    query = _dbSet.Where(combinedLambda);
-                }
-
-                return !await query.AnyAsync();
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-
-        // Generic name-based methods (for entities with Name properties)
-        public virtual async Task<T?> GetByNameAsync(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return null;
-
-            try
-            {
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var nameProperty = Expression.Property(parameter, "Name");
-                var toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
-                var toLowerCall = Expression.Call(nameProperty, toLowerMethod!);
-                var nameConstant = Expression.Constant(name.ToLower());
-                var equal = Expression.Equal(toLowerCall, nameConstant);
-                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
-
-                return await _dbSet.FirstOrDefaultAsync(lambda);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
-        public virtual async Task<bool> IsNameUniqueAsync(string name, int? excludeId = null)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return false;
-
-            try
-            {
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var nameProperty = Expression.Property(parameter, "Name");
-                var toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
-                var toLowerCall = Expression.Call(nameProperty, toLowerMethod!);
-                var nameConstant = Expression.Constant(name.ToLower());
-                var equal = Expression.Equal(toLowerCall, nameConstant);
-                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
-
-                var query = _dbSet.Where(lambda);
-
-                if (excludeId.HasValue)
-                {
-                    var idProperty = Expression.Property(parameter, "Id");
-                    var idConstant = Expression.Constant(excludeId.Value);
-                    var idNotEqual = Expression.NotEqual(idProperty, idConstant);
-                    var combined = Expression.AndAlso(equal, idNotEqual);
-                    var combinedLambda = Expression.Lambda<Func<T, bool>>(combined, parameter);
-                    query = _dbSet.Where(combinedLambda);
-                }
-
-                return !await query.AnyAsync();
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-
-        // Generic active/inactive filtering
-        public virtual async Task<IEnumerable<T>> GetActiveAsync()
-        {
-            try
-            {
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var isActiveProperty = Expression.Property(parameter, "IsActive");
-                var trueConstant = Expression.Constant(true);
-                var equal = Expression.Equal(isActiveProperty, trueConstant);
-                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
-
-                return await _dbSet.Where(lambda).ToListAsync();
-            }
-            catch (Exception)
-            {
-                return Enumerable.Empty<T>();
-            }
-        }
-
-        public virtual async Task<IEnumerable<T>> GetInactiveAsync()
-        {
-            try
-            {
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var isActiveProperty = Expression.Property(parameter, "IsActive");
-                var falseConstant = Expression.Constant(false);
-                var equal = Expression.Equal(isActiveProperty, falseConstant);
-                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
-
-                return await _dbSet.Where(lambda).ToListAsync();
-            }
-            catch (Exception)
-            {
-                return Enumerable.Empty<T>();
-            }
-        }
-
-        // Generic search method (for entities with searchable string properties)
-        public virtual async Task<IEnumerable<T>> SearchAsync(string searchTerm, params Expression<Func<T, object>>[] searchProperties)
-        {
-            if (string.IsNullOrWhiteSpace(searchTerm) || searchProperties == null || searchProperties.Length == 0)
-                return Enumerable.Empty<T>();
-
-            try
-            {
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var lowerSearchTerm = searchTerm.ToLower();
-                var searchTermConstant = Expression.Constant(lowerSearchTerm);
-
-                Expression? combinedExpression = null;
-
-                foreach (var searchProperty in searchProperties)
-                {
-                    var propertyExpression = searchProperty.Compile();
-                    var propertyValue = Expression.Invoke(searchProperty, parameter);
-                    var toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
-                    var toLowerCall = Expression.Call(propertyValue, toLowerMethod!);
-                    var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                    var containsCall = Expression.Call(toLowerCall, containsMethod!, searchTermConstant);
-
-                    if (combinedExpression == null)
-                        combinedExpression = containsCall;
-                    else
-                        combinedExpression = Expression.OrElse(combinedExpression, containsCall);
-                }
-
-                if (combinedExpression == null)
-                    return Enumerable.Empty<T>();
-
-                var lambda = Expression.Lambda<Func<T, bool>>(combinedExpression, parameter);
-                return await _dbSet.Where(lambda).ToListAsync();
-            }
-            catch (Exception)
-            {
-                return Enumerable.Empty<T>();
-            }
-        }
-
-        // Generic date range filtering (for entities with date properties)
-        public virtual async Task<IEnumerable<T>> GetByDateRangeAsync(Expression<Func<T, DateTime>> dateProperty, DateTime startDate, DateTime endDate)
-        {
-            try
-            {
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var propertyValue = Expression.Invoke(dateProperty, parameter);
-                var startDateConstant = Expression.Constant(startDate);
-                var endDateConstant = Expression.Constant(endDate);
-                var greaterThanOrEqual = Expression.GreaterThanOrEqual(propertyValue, startDateConstant);
-                var lessThanOrEqual = Expression.LessThanOrEqual(propertyValue, endDateConstant);
-                var combined = Expression.AndAlso(greaterThanOrEqual, lessThanOrEqual);
-                var lambda = Expression.Lambda<Func<T, bool>>(combined, parameter);
-
-                return await _dbSet.Where(lambda).ToListAsync();
-            }
-            catch (Exception)
-            {
-                return Enumerable.Empty<T>();
-            }
-        }
-
-        // Generic pagination
-        public virtual async Task<IEnumerable<T>> GetPagedAsync(int pageNumber, int pageSize, Expression<Func<T, object>>? orderBy = null, bool ascending = true)
-        {
-            try
-            {
-                IQueryable<T> query = _dbSet;
-
-                if (orderBy != null)
-                {
-                    query = ascending ? query.OrderBy(orderBy) : query.OrderByDescending(orderBy);
-                }
-
-                return await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
-            }
-            catch (Exception)
-            {
-                return Enumerable.Empty<T>();
-            }
-        }
-
-        public virtual async Task<IEnumerable<T>> GetPagedWhereAsync(Expression<Func<T, bool>> predicate, int pageNumber, int pageSize, Expression<Func<T, object>>? orderBy = null, bool ascending = true)
-        {
-            try
-            {
-                IQueryable<T> query = _dbSet.Where(predicate);
-
-                if (orderBy != null)
-                {
-                    query = ascending ? query.OrderBy(orderBy) : query.OrderByDescending(orderBy);
-                }
-
-                return await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
-            }
-            catch (Exception)
-            {
-                return Enumerable.Empty<T>();
-            }
-        }
-
-        // Generic includes
+        // Include methods
         public virtual async Task<T?> GetByIdWithIncludesAsync(int id, params Expression<Func<T, object>>[] includes)
         {
             try
@@ -542,12 +423,7 @@ namespace CompanySystem.Data.Repositories.Generic
                     query = query.Include(include);
                 }
                 
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var property = Expression.Property(parameter, "Id");
-                var equal = Expression.Equal(property, Expression.Constant(id));
-                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
-                
-                return await query.FirstOrDefaultAsync(lambda);
+                return await query.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
             }
             catch (Exception)
             {
@@ -564,7 +440,7 @@ namespace CompanySystem.Data.Repositories.Generic
                 {
                     query = query.Include(include);
                 }
-                return await query.FirstOrDefaultAsync(predicate);
+                return await query.AsNoTracking().FirstOrDefaultAsync(predicate);
             }
             catch (Exception)
             {
@@ -581,7 +457,7 @@ namespace CompanySystem.Data.Repositories.Generic
                 {
                     query = query.Include(include);
                 }
-                return await query.ToListAsync();
+                return await query.AsNoTracking().ToListAsync();
             }
             catch (Exception)
             {
@@ -598,12 +474,39 @@ namespace CompanySystem.Data.Repositories.Generic
                 {
                     query = query.Include(include);
                 }
-                return await query.Where(predicate).ToListAsync();
+                return await query.AsNoTracking().Where(predicate).ToListAsync();
             }
             catch (Exception)
             {
                 return Enumerable.Empty<T>();
             }
         }
+
+        // Helper methods
+        private void SetAuditFields(T entity, string? userBy, bool isUpdate)
+        {
+            if (string.IsNullOrWhiteSpace(userBy)) return;
+
+            if (isUpdate)
+            {
+                entity.UpdatedBy = userBy;
+                entity.UpdatedDate = DateTime.UtcNow;
+            }
+            else
+            {
+                entity.CreatedBy = userBy;
+                entity.CreatedDate = DateTime.UtcNow;
+            }
+        }
+
+        private void SetSoftDeleteFields(T entity, string? userBy, bool isDeleted)
+        {
+            entity.IsDeleted = isDeleted;
+            if (!string.IsNullOrWhiteSpace(userBy))
+            {
+                entity.UpdatedBy = userBy;
+                entity.UpdatedDate = DateTime.UtcNow;
+            }
+        }
     }
-} 
+}

@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using CompanySystem.Data.Enums;
 
-namespace CompanySystem.Data.Entities
+namespace CompanySystem.Data.Models
 {
     [Table("Notes")]
     public class Note : BaseEntity
@@ -28,8 +28,9 @@ namespace CompanySystem.Data.Entities
         [ForeignKey("CreatedByUser")]
         public int CreatedById { get; set; }
 
+        // Navigation Properties
+        public virtual User? Employee { get; set; }
 
-
-
+        public virtual User? CreatedByUser { get; set; }
     }
-} 
+}

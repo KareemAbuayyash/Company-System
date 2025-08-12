@@ -1,46 +1,43 @@
-
-// CompanySystem.Business/DTOs/Auth/RegisterModel.cs
 using System.ComponentModel.DataAnnotations;
 
-namespace CompanySystem.Business.DTOs.Auth
+namespace CompanySystem.Web.ViewModels
 {
-    public class RegisterModel
+    public class EditUserViewModel
     {
-        [Required]
-        [StringLength(20)]
-        public string SerialNumber { get; set; } = string.Empty;
+        public int Id { get; set; }
 
         [Required]
         [StringLength(100)]
+        [Display(Name = "First Name")]
         public string FirstName { get; set; } = string.Empty;
 
         [Required]
         [StringLength(100)]
+        [Display(Name = "Last Name")]
         public string LastName { get; set; } = string.Empty;
 
         [Required]
         [EmailAddress]
-        [StringLength(255)]
+        [Display(Name = "Email")]
         public string Email { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(255, MinimumLength = 6)]
-        public string Password { get; set; } = string.Empty;
-
         [StringLength(20)]
+        [Display(Name = "Serial Number")]
+        public string SerialNumber { get; set; } = string.Empty;
+
+        [Phone]
+        [Display(Name = "Phone Number")]
         public string? PhoneNumber { get; set; }
 
         [Required]
+        [Display(Name = "Role")]
         public int RoleId { get; set; }
 
+        [Display(Name = "Department")]
         public int? DepartmentId { get; set; }
 
-        public DateTime HireDate { get; set; } = DateTime.UtcNow;
-
-        public decimal? Salary { get; set; }
-
-        public string? Skills { get; set; }
-
-        public string? Experience { get; set; }
+        [Display(Name = "Is Active")]
+        public bool IsActive { get; set; }
     }
 }

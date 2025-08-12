@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using CompanySystem.Data.Enums;
 
-namespace CompanySystem.Data.Entities
+namespace CompanySystem.Data.Models
 {
     [Table("MainPageContent")]
     public class MainPageContent : BaseEntity
@@ -24,8 +24,7 @@ namespace CompanySystem.Data.Entities
         [ForeignKey("UpdatedByUser")]
         public int UpdatedById { get; set; }
 
-
-
-
+        // Navigation Properties
+        public virtual User? UpdatedByUser { get; set; }
     }
-} 
+}

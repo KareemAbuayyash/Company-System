@@ -1,7 +1,9 @@
+
+// CompanySystem.Business/Services/InitializationService.cs
 using CompanySystem.Data.Data;
-using CompanySystem.Data.Entities;
-using CompanySystem.Data.Enums;
+using CompanySystem.Data.Models;
 using CompanySystem.Business.Interfaces.Auth;
+using CompanySystem.Data.Repositories.Generic;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompanySystem.Business.Services
@@ -9,75 +11,67 @@ namespace CompanySystem.Business.Services
     public class InitializationService
     {
         private readonly CompanyDbContext _context;
+        private readonly IGenericRepository<User> _userRepository;
         private readonly IPasswordHasher _passwordHasher;
 
-        public InitializationService(CompanyDbContext context, IPasswordHasher passwordHasher)
+        public InitializationService(
+            CompanyDbContext context,
+            IGenericRepository<User> userRepository,
+            IPasswordHasher passwordHasher)
         {
             _context = context;
+            _userRepository = userRepository;
             _passwordHasher = passwordHasher;
         }
 
         public async Task InitializeAsync()
         {
-            // Check if admin user already exists
-            var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == "admin@company.com");
+            // Check if admin user already exists (including deleted ones)
+            var adminUser = await _userRepository.GetFirstOrDefaultIncludeDeletedAsync(u => u.Email == "admin@company.com");
             
             if (adminUser == null)
             {
-                // Create admin user with secure password
-                var admin = new User
+                // This should not happen as admin user is seeded, but just in case
+                var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == Role.RoleNames.Administrator);
+                
+                if (adminRole != null)
                 {
-                    SerialNumber = "ADMIN001",
-                    FirstName = "System",
-                    LastName = "Administrator",
-                    Email = "admin@company.com",
-                    RoleId = 1, // Administrator role
-                    HireDate = DateTime.UtcNow,
-                    IsActive = true,
-                    CreatedDate = DateTime.UtcNow
-                };
+                    var admin = new User
+                    {
+                        SerialNumber = "ADMIN001",
+                        FirstName = "System",
+                        LastName = "Administrator",
+                        Email = "admin@company.com",
+                        PasswordHash = _passwordHasher.HashPassword("Admin123!"),
+                        RoleId = adminRole.Id,
+                        HireDate = DateTime.UtcNow,
+                        IsActive = true,
+                        CreatedBy = "System",
+                        CreatedDate = DateTime.UtcNow,
+                        IsDeleted = false
+                    };
 
-                // Hash the password securely
-                admin.PasswordHash = _passwordHasher.HashPassword("Admin123!");
-
-                await _context.Users.AddAsync(admin);
-                await _context.SaveChangesAsync();
-
-                // Create main page content
-                var mainPageContents = new List<MainPageContent>
+                    await _userRepository.AddAsync(admin, "System");
+                    await _userRepository.SaveChangesAsync();
+                }
+            }
+            else
+            {
+                // Update the seeded admin user with proper password hash if it's still the temp hash
+                if (adminUser.PasswordHash == "TEMP_HASH")
                 {
-                    new MainPageContent
-                    {
-                        SectionName = SectionName.Overview,
-                        Title = "Company Overview",
-                        Content = "Welcome to our company management system.",
-                        UpdatedById = admin.Id,
-                        CreatedDate = DateTime.UtcNow,
-                        UpdatedDate = DateTime.UtcNow
-                    },
-                    new MainPageContent
-                    {
-                        SectionName = SectionName.AboutUs,
-                        Title = "About Us",
-                        Content = "We are a leading company in our industry.",
-                        UpdatedById = admin.Id,
-                        CreatedDate = DateTime.UtcNow,
-                        UpdatedDate = DateTime.UtcNow
-                    },
-                    new MainPageContent
-                    {
-                        SectionName = SectionName.Services,
-                        Title = "Our Services",
-                        Content = "We provide comprehensive business solutions.",
-                        UpdatedById = admin.Id,
-                        CreatedDate = DateTime.UtcNow,
-                        UpdatedDate = DateTime.UtcNow
-                    }
-                };
+                    adminUser.PasswordHash = _passwordHasher.HashPassword("Admin123!");
+                    await _userRepository.UpdateAsync(adminUser, "System");
+                    await _userRepository.SaveChangesAsync();
+                }
 
-                await _context.MainPageContent.AddRangeAsync(mainPageContents);
-                await _context.SaveChangesAsync();
+                // If admin user exists but is deleted, restore it
+                if (adminUser.IsDeleted)
+                {
+                    await _userRepository.RestoreAsync(adminUser, "System");
+                    await _userRepository.SaveChangesAsync();
+                }
             }
         }
     }
-} 
+}

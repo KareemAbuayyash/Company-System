@@ -1,4 +1,6 @@
-using CompanySystem.Data.Entities;
+
+// CompanySystem.Business/DTOs/Auth/AuthResult.cs
+using CompanySystem.Data.Models;
 
 namespace CompanySystem.Business.DTOs.Auth
 {
@@ -10,4 +12,4 @@ namespace CompanySystem.Business.DTOs.Auth
         public string? Token { get; set; }
         public DateTime? TokenExpiry { get; set; }
     }
-} 
+}

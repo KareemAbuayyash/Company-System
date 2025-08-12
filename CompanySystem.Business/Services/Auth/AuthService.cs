@@ -1,26 +1,33 @@
+// CompanySystem.Business/Services/Auth/AuthService.cs
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 using CompanySystem.Business.Interfaces.Auth;
 using CompanySystem.Business.DTOs.Auth;
-using CompanySystem.Data.Entities;
-using CompanySystem.Data.Repositories.Specific;
+using CompanySystem.Data.Models;
+using CompanySystem.Data.Repositories.Generic;
+using CompanySystem.Data.Data;
 
 namespace CompanySystem.Business.Services.Auth
 {
     public class AuthService : IAuthService
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IRoleRepository _roleRepository;
+        private readonly IGenericRepository<User> _userRepository;
+        private readonly IGenericRepository<Role> _roleRepository;
         private readonly IPasswordHasher _passwordHasher;
 
+        private readonly CompanyDbContext _context;
+
         public AuthService(
-            IUserRepository userRepository,
-            IRoleRepository roleRepository,
-            IPasswordHasher passwordHasher)
+            IGenericRepository<User> userRepository,
+            IGenericRepository<Role> roleRepository,
+            IPasswordHasher passwordHasher,
+            CompanyDbContext context)
         {
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _roleRepository = roleRepository ?? throw new ArgumentNullException(nameof(roleRepository));
             _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
+            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         // Authentication methods
@@ -37,7 +44,11 @@ namespace CompanySystem.Business.Services.Auth
                     };
                 }
 
-                var user = await _userRepository.GetByEmailWithRoleAsync(email);
+                // Get active user with navigation properties
+                var user = await _context.Users
+                    .Include(u => u.Role)
+                    .Include(u => u.Department)
+                    .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower() && !u.IsDeleted);
                 
                 if (user == null)
                 {
@@ -90,6 +101,11 @@ namespace CompanySystem.Business.Services.Auth
 
         public async Task<AuthResult> RegisterAsync(RegisterModel model)
         {
+            return await RegisterAsync(model, "System");
+        }
+
+        public async Task<AuthResult> RegisterAsync(RegisterModel model, string? createdBy)
+        {
             try
             {
                 // Validate required fields
@@ -106,8 +122,8 @@ namespace CompanySystem.Business.Services.Auth
                     };
                 }
 
-                // Check if email is unique
-                if (!await _userRepository.IsEmailUniqueAsync(model.Email))
+                // Check if email is unique (including deleted users)
+                if (!await IsEmailUniqueAsync(model.Email))
                 {
                     return new AuthResult
                     {
@@ -116,8 +132,8 @@ namespace CompanySystem.Business.Services.Auth
                     };
                 }
 
-                // Check if serial number is unique
-                if (!await _userRepository.IsSerialNumberUniqueAsync(model.SerialNumber))
+                // Check if serial number is unique (including deleted users)
+                if (!await IsSerialNumberUniqueAsync(model.SerialNumber))
                 {
                     return new AuthResult
                     {
@@ -126,8 +142,8 @@ namespace CompanySystem.Business.Services.Auth
                     };
                 }
 
-                // Validate role exists
-                var role = await _roleRepository.GetByIdAsync(model.RoleId);
+                // Validate role exists and is active
+                var role = await GetActiveRoleByIdAsync(model.RoleId);
                 if (role == null)
                 {
                     return new AuthResult
@@ -156,13 +172,10 @@ namespace CompanySystem.Business.Services.Auth
                     CreatedDate = DateTime.UtcNow
                 };
 
-                await _userRepository.AddAsync(user);
+                await _userRepository.AddAsync(user, createdBy);
                 
                 if (await _userRepository.SaveChangesAsync())
                 {
-                    // Reload user with role information
-                    user = await _userRepository.GetByEmailWithRoleAsync(user.Email);
-                    
                     return new AuthResult
                     {
                         Success = true,
@@ -204,6 +217,11 @@ namespace CompanySystem.Business.Services.Auth
         // Password management
         public async Task<bool> ChangePasswordAsync(int userId, string currentPassword, string newPassword)
         {
+            return await ChangePasswordAsync(userId, currentPassword, newPassword, null);
+        }
+
+        public async Task<bool> ChangePasswordAsync(int userId, string currentPassword, string newPassword, string? updatedBy)
+        {
             try
             {
                 var user = await _userRepository.GetByIdAsync(userId);
@@ -216,7 +234,7 @@ namespace CompanySystem.Business.Services.Auth
                 user.PasswordHash = HashPassword(newPassword);
                 user.UpdatedDate = DateTime.UtcNow;
 
-                await _userRepository.UpdateAsync(user);
+                await _userRepository.UpdateAsync(user, updatedBy);
                 return await _userRepository.SaveChangesAsync();
             }
             catch
@@ -227,9 +245,14 @@ namespace CompanySystem.Business.Services.Auth
 
         public async Task<bool> ResetPasswordAsync(string email)
         {
+            return await ResetPasswordAsync(email, null);
+        }
+
+        public async Task<bool> ResetPasswordAsync(string email, string? updatedBy)
+        {
             try
             {
-                var user = await _userRepository.GetByEmailAsync(email);
+                var user = await GetActiveUserByEmailAsync(email);
                 if (user == null || !user.IsActive)
                     return false;
 
@@ -238,7 +261,7 @@ namespace CompanySystem.Business.Services.Auth
                 user.PasswordHash = HashPassword(tempPassword);
                 user.UpdatedDate = DateTime.UtcNow;
 
-                await _userRepository.UpdateAsync(user);
+                await _userRepository.UpdateAsync(user, updatedBy);
                 var result = await _userRepository.SaveChangesAsync();
 
                 // TODO: Send email with temporary password
@@ -259,7 +282,7 @@ namespace CompanySystem.Business.Services.Auth
             return false;
         }
 
-        // User validation
+        // User validation and retrieval
         public async Task<bool> ValidateUserAsync(int userId)
         {
             try
@@ -290,11 +313,292 @@ namespace CompanySystem.Business.Services.Auth
         {
             try
             {
-                return await _userRepository.GetUserWithDetailsAsync(userId);
+                return await _userRepository.GetByIdAsync(userId);
             }
             catch
             {
                 return null;
+            }
+        }
+
+        public async Task<User?> GetUserByEmailAsync(string email)
+        {
+            try
+            {
+                return await _userRepository.GetFirstOrDefaultIncludeDeletedAsync(u => u.Email.ToLower() == email.ToLower());
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task<User?> GetActiveUserByEmailAsync(string email)
+        {
+            try
+            {
+                return await _userRepository.GetFirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task<User?> GetActiveUserByIdAsync(int userId)
+        {
+            try
+            {
+                return await _userRepository.GetByIdAsync(userId);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        // Role management
+        public async Task<Role?> GetRoleByIdAsync(int roleId)
+        {
+            try
+            {
+                return await _roleRepository.GetByIdIncludeDeletedAsync(roleId);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task<Role?> GetActiveRoleByIdAsync(int roleId)
+        {
+            try
+            {
+                return await _roleRepository.GetByIdAsync(roleId);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task<IEnumerable<Role>> GetAllActiveRolesAsync()
+        {
+            try
+            {
+                return await _roleRepository.GetAllAsync();
+            }
+            catch
+            {
+                return Enumerable.Empty<Role>();
+            }
+        }
+
+        // User management with tracking
+        public async Task<bool> ActivateUserAsync(int userId, string? updatedBy = null)
+        {
+            try
+            {
+                var user = await _userRepository.GetByIdIncludeDeletedAsync(userId);
+                if (user == null) return false;
+
+                user.IsActive = true;
+                await _userRepository.UpdateAsync(user, updatedBy);
+                return await _userRepository.SaveChangesAsync();
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> DeactivateUserAsync(int userId, string? updatedBy = null)
+        {
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (user == null) return false;
+
+                user.IsActive = false;
+                await _userRepository.UpdateAsync(user, updatedBy);
+                return await _userRepository.SaveChangesAsync();
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> SoftDeleteUserAsync(int userId, string? deletedBy = null)
+        {
+            try
+            {
+                var result = await _userRepository.SoftDeleteAsync(userId, deletedBy);
+                if (result)
+                {
+                    await _userRepository.SaveChangesAsync();
+                }
+                return result;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> RestoreUserAsync(int userId, string? restoredBy = null)
+        {
+            try
+            {
+                var result = await _userRepository.RestoreAsync(userId, restoredBy);
+                if (result)
+                {
+                    await _userRepository.SaveChangesAsync();
+                }
+                return result;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateUserAsync(User user, string? updatedBy = null)
+        {
+            try
+            {
+                await _userRepository.UpdateAsync(user, updatedBy);
+                return await _userRepository.SaveChangesAsync();
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // User queries with soft delete awareness
+        public async Task<IEnumerable<User>> GetAllActiveUsersAsync()
+        {
+            try
+            {
+                return await _userRepository.GetAllAsync();
+            }
+            catch
+            {
+                return Enumerable.Empty<User>();
+            }
+        }
+
+        public async Task<IEnumerable<User>> GetActiveUsersByRoleAsync(int roleId)
+        {
+            try
+            {
+                return await _userRepository.GetWhereAsync(u => u.RoleId == roleId);
+            }
+            catch
+            {
+                return Enumerable.Empty<User>();
+            }
+        }
+
+        public async Task<IEnumerable<User>> GetActiveUsersByDepartmentAsync(int? departmentId)
+        {
+            try
+            {
+                return await _userRepository.GetWhereAsync(u => u.DepartmentId == departmentId);
+            }
+            catch
+            {
+                return Enumerable.Empty<User>();
+            }
+        }
+
+        public async Task<int> GetActiveUserCountAsync()
+        {
+            try
+            {
+                return await _userRepository.CountAsync();
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        public async Task<int> GetActiveUserCountByRoleAsync(int roleId)
+        {
+            try
+            {
+                return await _userRepository.CountWhereAsync(u => u.RoleId == roleId);
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        // Email and serial number validation
+        public async Task<bool> IsEmailUniqueAsync(string email, int? excludeUserId = null)
+        {
+            try
+            {
+                if (excludeUserId.HasValue)
+                {
+                    return !await _userRepository.ExistsIncludeDeletedAsync(u => u.Email.ToLower() == email.ToLower() && u.Id != excludeUserId.Value);
+                }
+                return !await _userRepository.ExistsIncludeDeletedAsync(u => u.Email.ToLower() == email.ToLower());
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> IsSerialNumberUniqueAsync(string serialNumber, int? excludeUserId = null)
+        {
+            try
+            {
+                if (excludeUserId.HasValue)
+                {
+                    return !await _userRepository.ExistsIncludeDeletedAsync(u => u.SerialNumber == serialNumber && u.Id != excludeUserId.Value);
+                }
+                return !await _userRepository.ExistsIncludeDeletedAsync(u => u.SerialNumber == serialNumber);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> IsActiveEmailUniqueAsync(string email, int? excludeUserId = null)
+        {
+            try
+            {
+                if (excludeUserId.HasValue)
+                {
+                    return !await _userRepository.ExistsAsync(u => u.Email.ToLower() == email.ToLower() && u.Id != excludeUserId.Value);
+                }
+                return !await _userRepository.ExistsAsync(u => u.Email.ToLower() == email.ToLower());
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> IsActiveSerialNumberUniqueAsync(string serialNumber, int? excludeUserId = null)
+        {
+            try
+            {
+                if (excludeUserId.HasValue)
+                {
+                    return !await _userRepository.ExistsAsync(u => u.SerialNumber == serialNumber && u.Id != excludeUserId.Value);
+                }
+                return !await _userRepository.ExistsAsync(u => u.SerialNumber == serialNumber);
+            }
+            catch
+            {
+                return false;
             }
         }
 
@@ -364,4 +668,4 @@ namespace CompanySystem.Business.Services.Auth
             return new string(chars);
         }
     }
-} 
+}

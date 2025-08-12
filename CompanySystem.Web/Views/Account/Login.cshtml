@@ -1,0 +1,258 @@
+@model CompanySystem.Web.ViewModels.LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<style>
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: -15px;
+        padding: 15px;
+    }
+
+    .login-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .login-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-align: center;
+        padding: 30px 20px;
+    }
+
+    .login-body {
+        padding: 30px;
+    }
+
+    .form-control {
+        border-radius: 25px;
+        padding: 12px 20px;
+        border: 2px solid #e3e6f0;
+        transition: border-color 0.3s;
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .btn-login {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: transform 0.3s;
+        color: white;
+    }
+
+    .btn-login:hover {
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    .demo-credentials {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-left: 4px solid #007bff;
+    }
+
+    .alert {
+        border-radius: 10px;
+        border: none;
+    }
+</style>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h2><i class="fas fa-building"></i> Company System</h2>
+            <p class="mb-0">Welcome back! Please sign in to continue.</p>
+        </div>
+        
+        <div class="login-body">
+            <!-- Demo Credentials Box -->
+            <div class="demo-credentials">
+                <h6><i class="fas fa-info-circle"></i> Demo Credentials</h6>
+                <p class="mb-1"><strong>Email:</strong> admin@company.com</p>
+                <p class="mb-0"><strong>Password:</strong> Admin123!</p>
+                <button type="button" class="btn btn-sm btn-primary mt-2" onclick="fillDemoCredentials()">
+                    <i class="fas fa-magic"></i> Auto Fill
+                </button>
+            </div>
+
+            <!-- Success message container -->
+            <div id="success-container" style="display: none;">
+                <div class="alert alert-success" role="alert">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="success-message"></span>
+                </div>
+            </div>
+
+            <form action="@Url.Action("Login", "Account")" method="post">
+                @Html.AntiForgeryToken()
+                <input name="returnUrl" type="hidden" value="@ViewData["ReturnUrl"]" />
+                
+                <div class="form-group mb-3">
+                    <label for="Email" class="form-label">
+                        <i class="fas fa-envelope"></i> Email Address
+                    </label>
+                    <input id="Email" name="Email" type="email" class="form-control" 
+                           placeholder="Enter your email" 
+                           value="admin@company.com" 
+                           autocomplete="email" />
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="Password" class="form-label">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <div class="input-group">
+                        <input id="Password" name="Password" type="password" class="form-control" 
+                               placeholder="Enter your password" 
+                               value="Admin123!"
+                               autocomplete="current-password" />
+                        <button type="button" class="btn btn-outline-secondary" id="togglePassword">
+                            <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group mb-4">
+                    <div class="form-check">
+                        <input id="RememberMe" name="RememberMe" type="checkbox" class="form-check-input" value="true" />
+                        <input name="RememberMe" type="hidden" value="false" />
+                        <label for="RememberMe" class="form-check-label">
+                            Remember me for 30 days
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <button type="submit" class="btn btn-primary btn-login w-100">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </button>
+                </div>
+            </form>
+            
+            <div class="text-center">
+                <p class="text-muted">
+                    <small>
+                        <i class="fas fa-shield-alt"></i> 
+                        Your data is secure and protected
+                    </small>
+                </p>
+                <p class="text-muted">
+                    <small>
+                        Need help? Contact your system administrator
+                    </small>
+                </p>
+            </div>
+
+            <!-- Development Tools -->
+            <div class="mt-3 pt-3 border-top">
+                <h6>Development Tools</h6>
+                <div class="btn-group w-100" role="group">
+                    <button type="button" class="btn btn-outline-warning btn-sm" onclick="resetAdminPassword()">
+                        <i class="fas fa-key"></i> Reset Admin
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="debugAdmin()">
+                        <i class="fas fa-bug"></i> Debug
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple functions - no validation
+    function fillDemoCredentials() {
+        document.getElementById('Email').value = 'admin@company.com';
+        document.getElementById('Password').value = 'Admin123!';
+        showMessage('Demo credentials filled!', 'success');
+    }
+
+    function resetAdminPassword() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '@Url.Action("ResetAdminPassword", "Account")', true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                showMessage(response.message, response.success ? 'success' : 'error');
+                if (response.success) {
+                    fillDemoCredentials();
+                }
+            }
+        };
+        xhr.send();
+    }
+
+    function debugAdmin() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '@Url.Action("DebugAdmin", "Account")', true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                var response = JSON.parse(xhr.responseText);
+                console.log('Debug Info:', response);
+                if (response.Found) {
+                    var info = 'Admin User Found!\n' +
+                              'Email: ' + response.Email + '\n' +
+                              'Role: ' + response.Role + '\n' +
+                              'Active: ' + response.IsActive + '\n' +
+                              'Password Valid: ' + response.PasswordValid;
+                    alert(info);
+                } else {
+                    alert('Admin user not found!');
+                }
+            }
+        };
+        xhr.send();
+    }
+
+    function showMessage(message, type) {
+        var container = document.getElementById('success-container');
+        var messageSpan = document.getElementById('success-message');
+        
+        messageSpan.textContent = message;
+        container.style.display = 'block';
+        
+        setTimeout(function() {
+            container.style.display = 'none';
+        }, 3000);
+    }
+
+    // Password toggle
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        var passwordField = document.getElementById('Password');
+        var icon = document.getElementById('togglePasswordIcon');
+        
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+        } else {
+            passwordField.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    });
+
+    // Auto-fill on page load
+    window.onload = function() {
+        fillDemoCredentials();
+    };
+</script>

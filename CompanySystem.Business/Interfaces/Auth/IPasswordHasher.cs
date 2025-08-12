@@ -5,4 +5,4 @@ namespace CompanySystem.Business.Interfaces.Auth
         string HashPassword(string password);
         bool VerifyPassword(string password, string hashedPassword);
     }
-} 
+}
