@@ -1,0 +1,97 @@
+@model CompanySystem.Web.ViewModels.RoleViewModel
+@{
+    ViewData["Title"] = "Role Details";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-tag me-2"></i>
+                        Role Details
+                    </h4>
+                    <div>
+                        <a href="@Url.Action("Edit", "Role", new { id = Model.RoleId })" class="btn btn-warning">
+                            <i class="fas fa-edit me-1"></i>
+                            Edit
+                        </a>
+                        <a href="@Url.Action("Index", "Role")" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Back to List
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5 class="text-primary mb-3">Role Information</h5>
+                            <dl class="row">
+                                <dt class="col-sm-3">Role Name</dt>
+                                <dd class="col-sm-9">
+                                    <span class="badge bg-info fs-6">@Model.RoleName</span>
+                                </dd>
+
+                                <dt class="col-sm-3">Description</dt>
+                                <dd class="col-sm-9">
+                                    @if (!string.IsNullOrEmpty(Model.Description))
+                                    {
+                                        @Model.Description
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No description provided</span>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-3">Status</dt>
+                                <dd class="col-sm-9">
+                                    @if (Model.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Inactive</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Audit Information
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <dl class="row">
+                                        <dt class="col-sm-5">Created</dt>
+                                        <dd class="col-sm-7">
+                                            <small>@Model.CreatedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                                            <br>
+                                            <small class="text-muted">by @Model.CreatedBy</small>
+                                        </dd>
+
+                                        @if (Model.UpdatedDate.HasValue)
+                                        {
+                                            <dt class="col-sm-5">Last Updated</dt>
+                                            <dd class="col-sm-7">
+                                                <small>@Model.UpdatedDate.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                                                <br>
+                                                <small class="text-muted">by @Model.UpdatedBy</small>
+                                            </dd>
+                                        }
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

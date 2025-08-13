@@ -39,6 +39,23 @@
                         Notes
                     </a>
                 </li>
+                @if (User.IsInRole("Administrator"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "User" ? "active" : "")" 
+                           href="@Url.Action("Index", "User")">
+                            <i class="fas fa-users me-1"></i>
+                            Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Role" ? "active" : "")" 
+                           href="@Url.Action("Index", "Role")">
+                            <i class="fas fa-user-tag me-1"></i>
+                            Roles
+                        </a>
+                    </li>
+                }
                 <li class="nav-item">
                     <a class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "About" ? "active" : "")" 
                        href="@Url.Action("About", "Home")">
@@ -46,6 +63,32 @@
                         About
                     </a>
                 </li>
+            </ul>
+            <ul class="navbar-nav">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            @User.Identity.Name
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="@Url.Action("Logout", "Account")">
+                                <i class="fas fa-sign-out-alt me-1"></i>
+                                Logout
+                            </a></li>
+                        </ul>
+                    </li>
+                }
+                else
+                {
+                    <li class="nav-item">
+                        <a class="nav-link" href="@Url.Action("Login", "Account")">
+                            <i class="fas fa-sign-in-alt me-1"></i>
+                            Login
+                        </a>
+                    </li>
+                }
             </ul>
         </div>
     </div>
