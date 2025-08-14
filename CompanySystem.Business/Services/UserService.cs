@@ -19,9 +19,7 @@ namespace CompanySystem.Business.Services
 
         public async Task<IEnumerable<User>> GetAllUsersAsync()
         {
-            return await _context.Users
-                .Include(u => u.Role)
-                .Include(u => u.Department)
+            return await GetBaseUserQuery()
                 .OrderBy(u => u.FirstName)
                 .ThenBy(u => u.LastName)
                 .ToListAsync();
@@ -29,43 +27,8 @@ namespace CompanySystem.Business.Services
 
         public async Task<IEnumerable<User>> GetFilteredUsersAsync(string? searchTerm = null, string sortBy = "name")
         {
-            var query = _context.Users
-                .Include(u => u.Role)
-                .Include(u => u.Department)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(searchTerm))
-            {
-                var trimmedSearchTerm = searchTerm.Trim();
-                query = query.Where(u => 
-                    EF.Functions.Like(u.Username, $"%{trimmedSearchTerm}%") ||
-                    EF.Functions.Like(u.Email, $"%{trimmedSearchTerm}%") ||
-                    EF.Functions.Like(u.FirstName, $"%{trimmedSearchTerm}%") ||
-                    EF.Functions.Like(u.LastName, $"%{trimmedSearchTerm}%") ||
-                    EF.Functions.Like(u.PhoneNumber, $"%{trimmedSearchTerm}%") ||
-                    EF.Functions.Like(u.Role.RoleName, $"%{trimmedSearchTerm}%") ||
-                    EF.Functions.Like(u.Department.DepartmentName, $"%{trimmedSearchTerm}%") ||
-                    EF.Functions.Like(u.CreatedBy, $"%{trimmedSearchTerm}%"));
-            }
-
-            query = sortBy?.ToLower() switch
-            {
-                "name" => query.OrderBy(u => u.FirstName).ThenBy(u => u.LastName),
-                "name_desc" => query.OrderByDescending(u => u.FirstName).ThenByDescending(u => u.LastName),
-                "username" => query.OrderBy(u => u.Username),
-                "username_desc" => query.OrderByDescending(u => u.Username),
-                "email" => query.OrderBy(u => u.Email),
-                "email_desc" => query.OrderByDescending(u => u.Email),
-                "role" => query.OrderBy(u => u.Role.RoleName),
-                "role_desc" => query.OrderByDescending(u => u.Role.RoleName),
-                "department" => query.OrderBy(u => u.Department.DepartmentName),
-                "department_desc" => query.OrderByDescending(u => u.Department.DepartmentName),
-                "date" => query.OrderBy(u => u.CreatedDate),
-                "date_desc" => query.OrderByDescending(u => u.CreatedDate),
-                "creator" => query.OrderBy(u => u.CreatedBy),
-                "creator_desc" => query.OrderByDescending(u => u.CreatedBy),
-                _ => query.OrderBy(u => u.FirstName).ThenBy(u => u.LastName)
-            };
+            var query = ApplySearchFilter(GetBaseUserQuery(), searchTerm);
+            query = ApplySorting(query, sortBy);
 
             return await query.ToListAsync();
         }
@@ -73,27 +36,7 @@ namespace CompanySystem.Business.Services
         public async Task<UserSearchResultDto> GetUsersForIndexAsync(string? searchTerm = null, string sortBy = "name")
         {
             var users = await GetFilteredUsersAsync(searchTerm, sortBy);
-            
-            var userDtos = users.Select(u => new UserDto
-            {
-                UserId = u.UserId,
-                Username = u.Username,
-                Email = u.Email,
-                FirstName = u.FirstName,
-                LastName = u.LastName,
-                PhoneNumber = u.PhoneNumber,
-                IsActive = u.IsActive,
-                LastLoginDate = u.LastLoginDate,
-                RoleId = u.RoleId,
-                RoleName = u.Role?.RoleName ?? string.Empty,
-                DepartmentId = u.DepartmentId,
-                DepartmentName = u.Department?.DepartmentName,
-                FullName = u.FullName,
-                CreatedBy = u.CreatedBy,
-                CreatedDate = u.CreatedDate,
-                UpdatedBy = u.UpdatedBy,
-                UpdatedDate = u.UpdatedDate
-            }).ToList();
+            var userDtos = users.Select(MapToUserDto).ToList();
 
             return new UserSearchResultDto
             {
@@ -108,77 +51,20 @@ namespace CompanySystem.Business.Services
         public async Task<IEnumerable<UserDto>> GetUsersForSearchAsync(string? searchTerm = null, string sortBy = "name")
         {
             var users = await GetFilteredUsersAsync(searchTerm, sortBy);
-            
-            return users.Select(u => new UserDto
-            {
-                UserId = u.UserId,
-                Username = u.Username,
-                Email = u.Email,
-                FirstName = u.FirstName,
-                LastName = u.LastName,
-                PhoneNumber = u.PhoneNumber,
-                IsActive = u.IsActive,
-                LastLoginDate = u.LastLoginDate,
-                RoleId = u.RoleId,
-                RoleName = u.Role?.RoleName ?? string.Empty,
-                DepartmentId = u.DepartmentId,
-                DepartmentName = u.Department?.DepartmentName,
-                FullName = u.FullName,
-                CreatedBy = u.CreatedBy,
-                CreatedDate = u.CreatedDate,
-                UpdatedBy = u.UpdatedBy,
-                UpdatedDate = u.UpdatedDate
-            }).ToList();
+            return users.Select(MapToUserDto).ToList();
         }
 
         public async Task<UserDto?> GetUserDtoByIdAsync(int id)
         {
-            var user = await _context.Users
-                .Include(u => u.Role)
-                .Include(u => u.Department)
+            var user = await GetBaseUserQuery()
                 .FirstOrDefaultAsync(u => u.UserId == id);
 
-            if (user == null)
-                return null;
-
-            return new UserDto
-            {
-                UserId = user.UserId,
-                Username = user.Username,
-                Email = user.Email,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                PhoneNumber = user.PhoneNumber,
-                IsActive = user.IsActive,
-                LastLoginDate = user.LastLoginDate,
-                RoleId = user.RoleId,
-                RoleName = user.Role?.RoleName ?? string.Empty,
-                DepartmentId = user.DepartmentId,
-                DepartmentName = user.Department?.DepartmentName,
-                FullName = user.FullName,
-                CreatedBy = user.CreatedBy,
-                CreatedDate = user.CreatedDate,
-                UpdatedBy = user.UpdatedBy,
-                UpdatedDate = user.UpdatedDate
-            };
+            return user == null ? null : MapToUserDto(user);
         }
 
         public async Task<int> GetUserCountAsync(string? searchTerm = null)
         {
-            var query = _context.Users.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(searchTerm))
-            {
-                var trimmedSearchTerm = searchTerm.Trim();
-                query = query.Where(u => 
-                    EF.Functions.Like(u.Username, $"%{trimmedSearchTerm}%") ||
-                    EF.Functions.Like(u.Email, $"%{trimmedSearchTerm}%") ||
-                    EF.Functions.Like(u.FirstName, $"%{trimmedSearchTerm}%") ||
-                    EF.Functions.Like(u.LastName, $"%{trimmedSearchTerm}%") ||
-                    EF.Functions.Like(u.PhoneNumber, $"%{trimmedSearchTerm}%") ||
-                    EF.Functions.Like(u.CreatedBy, $"%{trimmedSearchTerm}%"));
-            }
-
+            var query = ApplySearchFilter(_context.Users.AsQueryable(), searchTerm);
             return await query.CountAsync();
         }
 
@@ -193,19 +79,9 @@ namespace CompanySystem.Business.Services
 
         public async Task<User?> CreateUserAsync(CreateUserDto model, string? createdBy = null)
         {
-            if (string.IsNullOrWhiteSpace(model.Username))
-                throw new ArgumentNullException(nameof(model.Username));
+            ValidateRequiredFields(model.Username, model.Email, model.Password);
 
-            if (string.IsNullOrWhiteSpace(model.Email))
-                throw new ArgumentNullException(nameof(model.Email));
-
-            if (string.IsNullOrWhiteSpace(model.Password))
-                throw new ArgumentNullException(nameof(model.Password));
-
-            if (await UsernameExistsAsync(model.Username))
-                return null;
-
-            if (await EmailExistsAsync(model.Email))
+            if (await UsernameExistsAsync(model.Username) || await EmailExistsAsync(model.Email))
                 return null;
 
             var user = new User
@@ -232,35 +108,16 @@ namespace CompanySystem.Business.Services
 
         public async Task<User?> UpdateUserAsync(int userId, EditUserDto model, string? updatedBy = null)
         {
-            if (string.IsNullOrWhiteSpace(model.Username))
-                throw new ArgumentNullException(nameof(model.Username));
+            ValidateRequiredFields(model.Username, model.Email);
 
-            if (string.IsNullOrWhiteSpace(model.Email))
-                throw new ArgumentNullException(nameof(model.Email));
-
-            if (await UsernameExistsAsync(model.Username, userId))
+            if (await UsernameExistsAsync(model.Username, userId) || await EmailExistsAsync(model.Email, userId))
                 return null;
 
-            if (await EmailExistsAsync(model.Email, userId))
-                return null;
-
-            var existingUser = await _context.Users
-                .FirstOrDefaultAsync(u => u.UserId == userId);
-
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
             if (existingUser == null)
                 throw new InvalidOperationException("User not found");
 
-            existingUser.Username = model.Username;
-            existingUser.Email = model.Email;
-            existingUser.FirstName = model.FirstName;
-            existingUser.LastName = model.LastName;
-            existingUser.PhoneNumber = model.PhoneNumber;
-            existingUser.IsActive = model.IsActive;
-            existingUser.RoleId = model.RoleId;
-            existingUser.DepartmentId = model.DepartmentId;
-            existingUser.UpdatedBy = updatedBy ?? "System";
-            existingUser.UpdatedDate = DateTime.UtcNow;
-
+            UpdateUserProperties(existingUser, model, updatedBy);
             await _context.SaveChangesAsync();
             return existingUser;
         }
@@ -285,7 +142,6 @@ namespace CompanySystem.Business.Services
             }
             catch (Exception ex)
             {
-                // Log the exception for debugging
                 System.Diagnostics.Debug.WriteLine($"User deletion error: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
                 return false;
@@ -301,51 +157,142 @@ namespace CompanySystem.Business.Services
 
         public async Task<bool> UsernameExistsAsync(string username, int? excludeId = null)
         {
-            var query = _context.Users.Where(u => u.Username.ToLower() == username.ToLower());
-            
-            if (excludeId.HasValue)
-                query = query.Where(u => u.UserId != excludeId.Value);
-
-            return await query.AnyAsync();
+            return await CheckFieldExistsAsync(u => u.Username.ToLower() == username.ToLower(), excludeId);
         }
 
         public async Task<bool> EmailExistsAsync(string email, int? excludeId = null)
         {
-            var query = _context.Users.Where(u => u.Email.ToLower() == email.ToLower());
-            
-            if (excludeId.HasValue)
-                query = query.Where(u => u.UserId != excludeId.Value);
-
-            return await query.AnyAsync();
+            return await CheckFieldExistsAsync(u => u.Email.ToLower() == email.ToLower(), excludeId);
         }
 
         public async Task<User?> GetUserByUsernameAsync(string username)
         {
-            return await _context.Users
-                .Include(u => u.Role)
-                .Include(u => u.Department)
+            return await GetBaseUserQuery()
                 .FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
         }
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
-            return await _context.Users
-                .Include(u => u.Role)
-                .Include(u => u.Department)
+            return await GetBaseUserQuery()
                 .FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
         }
 
         public async Task<bool> UpdateLastLoginAsync(int userId)
         {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.UserId == userId);
-
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
             if (user == null)
                 return false;
 
             user.LastLoginDate = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        // Private helper methods to eliminate duplication
+        private IQueryable<User> GetBaseUserQuery()
+        {
+            return _context.Users
+                .Include(u => u.Role)
+                .Include(u => u.Department);
+        }
+
+        private static IQueryable<User> ApplySearchFilter(IQueryable<User> query, string? searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return query;
+
+            var trimmedSearchTerm = searchTerm.Trim();
+            return query.Where(u =>
+                EF.Functions.Like(u.Username, $"%{trimmedSearchTerm}%") ||
+                EF.Functions.Like(u.Email, $"%{trimmedSearchTerm}%") ||
+                EF.Functions.Like(u.FirstName, $"%{trimmedSearchTerm}%") ||
+                EF.Functions.Like(u.LastName, $"%{trimmedSearchTerm}%") ||
+                EF.Functions.Like(u.PhoneNumber, $"%{trimmedSearchTerm}%") ||
+                EF.Functions.Like(u.Role.RoleName, $"%{trimmedSearchTerm}%") ||
+                EF.Functions.Like(u.Department.DepartmentName, $"%{trimmedSearchTerm}%") ||
+                EF.Functions.Like(u.CreatedBy, $"%{trimmedSearchTerm}%"));
+        }
+
+        private static IQueryable<User> ApplySorting(IQueryable<User> query, string sortBy)
+        {
+            return sortBy?.ToLower() switch
+            {
+                "name" => query.OrderBy(u => u.FirstName).ThenBy(u => u.LastName),
+                "name_desc" => query.OrderByDescending(u => u.FirstName).ThenByDescending(u => u.LastName),
+                "username" => query.OrderBy(u => u.Username),
+                "username_desc" => query.OrderByDescending(u => u.Username),
+                "email" => query.OrderBy(u => u.Email),
+                "email_desc" => query.OrderByDescending(u => u.Email),
+                "role" => query.OrderBy(u => u.Role.RoleName),
+                "role_desc" => query.OrderByDescending(u => u.Role.RoleName),
+                "department" => query.OrderBy(u => u.Department.DepartmentName),
+                "department_desc" => query.OrderByDescending(u => u.Department.DepartmentName),
+                "date" => query.OrderBy(u => u.CreatedDate),
+                "date_desc" => query.OrderByDescending(u => u.CreatedDate),
+                "creator" => query.OrderBy(u => u.CreatedBy),
+                "creator_desc" => query.OrderByDescending(u => u.CreatedBy),
+                _ => query.OrderBy(u => u.FirstName).ThenBy(u => u.LastName)
+            };
+        }
+
+        private static UserDto MapToUserDto(User user)
+        {
+            return new UserDto
+            {
+                UserId = user.UserId,
+                Username = user.Username,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                PhoneNumber = user.PhoneNumber,
+                IsActive = user.IsActive,
+                LastLoginDate = user.LastLoginDate,
+                RoleId = user.RoleId,
+                RoleName = user.Role?.RoleName ?? string.Empty,
+                DepartmentId = user.DepartmentId,
+                DepartmentName = user.Department?.DepartmentName,
+                FullName = user.FullName,
+                CreatedBy = user.CreatedBy,
+                CreatedDate = user.CreatedDate,
+                UpdatedBy = user.UpdatedBy,
+                UpdatedDate = user.UpdatedDate
+            };
+        }
+
+        private static void ValidateRequiredFields(string username, string email, string? password = null)
+        {
+            if (string.IsNullOrWhiteSpace(username))
+                throw new ArgumentNullException(nameof(username));
+
+            if (string.IsNullOrWhiteSpace(email))
+                throw new ArgumentNullException(nameof(email));
+
+            if (password != null && string.IsNullOrWhiteSpace(password))
+                throw new ArgumentNullException(nameof(password));
+        }
+
+        private async Task<bool> CheckFieldExistsAsync(System.Linq.Expressions.Expression<Func<User, bool>> predicate, int? excludeId = null)
+        {
+            var query = _context.Users.Where(predicate);
+
+            if (excludeId.HasValue)
+                query = query.Where(u => u.UserId != excludeId.Value);
+
+            return await query.AnyAsync();
+        }
+
+        private static void UpdateUserProperties(User existingUser, EditUserDto model, string? updatedBy)
+        {
+            existingUser.Username = model.Username;
+            existingUser.Email = model.Email;
+            existingUser.FirstName = model.FirstName;
+            existingUser.LastName = model.LastName;
+            existingUser.PhoneNumber = model.PhoneNumber;
+            existingUser.IsActive = model.IsActive;
+            existingUser.RoleId = model.RoleId;
+            existingUser.DepartmentId = model.DepartmentId;
+            existingUser.UpdatedBy = updatedBy ?? "System";
+            existingUser.UpdatedDate = DateTime.UtcNow;
         }
     }
 }
