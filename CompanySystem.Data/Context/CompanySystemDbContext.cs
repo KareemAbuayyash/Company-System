@@ -12,6 +12,8 @@ namespace CompanySystem.Data.Context
         public DbSet<Department> Departments { get; set; }
         public DbSet<MainPageContent> MainPageContents { get; set; }
         public DbSet<Note> Notes { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -57,9 +59,56 @@ namespace CompanySystem.Data.Context
                 entity.HasIndex(e => e.CreatedBy);
             });
 
+            modelBuilder.Entity<Role>(entity =>
+            {
+                entity.HasKey(e => e.RoleId);
+                entity.Property(e => e.RoleId).ValueGeneratedOnAdd();
+                entity.Property(e => e.RoleName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Description).HasMaxLength(500);
+                entity.Property(e => e.IsActive).IsRequired();
+                entity.Property(e => e.CreatedBy).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.UpdatedBy).HasMaxLength(100);
+                
+                entity.HasIndex(e => e.RoleName).IsUnique();
+            });
+
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasKey(e => e.UserId);
+                entity.Property(e => e.UserId).ValueGeneratedOnAdd();
+                entity.Property(e => e.Username).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+                entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(255);
+                entity.Property(e => e.IsActive).IsRequired();
+                entity.Property(e => e.LastLoginDate).IsRequired();
+                entity.Property(e => e.RoleId).IsRequired();
+                entity.Property(e => e.CreatedBy).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.UpdatedBy).HasMaxLength(100);
+                
+                entity.HasIndex(e => e.Username).IsUnique();
+                entity.HasIndex(e => e.Email).IsUnique();
+                entity.HasIndex(e => e.RoleId);
+                entity.HasIndex(e => e.DepartmentId);
+                
+                entity.HasOne(e => e.Role)
+                    .WithMany(e => e.Users)
+                    .HasForeignKey(e => e.RoleId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                
+                entity.HasOne(e => e.Department)
+                    .WithMany()
+                    .HasForeignKey(e => e.DepartmentId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
             modelBuilder.Entity<Department>().HasQueryFilter(e => !e.IsDeleted);
             modelBuilder.Entity<MainPageContent>().HasQueryFilter(e => !e.IsDeleted);
             modelBuilder.Entity<Note>().HasQueryFilter(e => !e.IsDeleted);
+            modelBuilder.Entity<Role>().HasQueryFilter(e => !e.IsDeleted);
+            modelBuilder.Entity<User>().HasQueryFilter(e => !e.IsDeleted);
 
             SeedData(modelBuilder);
         }
@@ -80,6 +129,105 @@ namespace CompanySystem.Data.Context
                 {
                     DepartmentId = 2,
                     DepartmentName = "Information Technology",
+                    CreatedBy = "System",
+                    CreatedDate = DateTime.UtcNow,
+                    IsDeleted = false
+                }
+            );
+
+            // Seed Roles
+            modelBuilder.Entity<Role>().HasData(
+                new Role
+                {
+                    RoleId = 1,
+                    RoleName = "Administrator",
+                    Description = "Full system access with all permissions",
+                    IsActive = true,
+                    CreatedBy = "System",
+                    CreatedDate = DateTime.UtcNow,
+                    IsDeleted = false
+                },
+                new Role
+                {
+                    RoleId = 2,
+                    RoleName = "HR",
+                    Description = "Human Resources management access",
+                    IsActive = true,
+                    CreatedBy = "System",
+                    CreatedDate = DateTime.UtcNow,
+                    IsDeleted = false
+                },
+                new Role
+                {
+                    RoleId = 3,
+                    RoleName = "Lead",
+                    Description = "Team lead and project management access",
+                    IsActive = true,
+                    CreatedBy = "System",
+                    CreatedDate = DateTime.UtcNow,
+                    IsDeleted = false
+                },
+                new Role
+                {
+                    RoleId = 4,
+                    RoleName = "Employee",
+                    Description = "Standard employee access",
+                    IsActive = true,
+                    CreatedBy = "System",
+                    CreatedDate = DateTime.UtcNow,
+                    IsDeleted = false
+                }
+            );
+
+            // Seed Users
+            modelBuilder.Entity<User>().HasData(
+                new User
+                {
+                    UserId = 1,
+                    Username = "admin",
+                    Email = "admin@company.com",
+                    FirstName = "System",
+                    LastName = "Administrator",
+                    PhoneNumber = "1234567890",
+                    PasswordHash = "jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=", // admin123
+                    IsActive = true,
+                    LastLoginDate = DateTime.UtcNow,
+                    RoleId = 1,
+                    DepartmentId = null,
+                    CreatedBy = "System",
+                    CreatedDate = DateTime.UtcNow,
+                    IsDeleted = false
+                },
+                new User
+                {
+                    UserId = 2,
+                    Username = "hr.user",
+                    Email = "hr@company.com",
+                    FirstName = "HR",
+                    LastName = "User",
+                    PhoneNumber = "1234567891",
+                    PasswordHash = "jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=", // admin123
+                    IsActive = true,
+                    LastLoginDate = DateTime.UtcNow,
+                    RoleId = 2,
+                    DepartmentId = 1,
+                    CreatedBy = "System",
+                    CreatedDate = DateTime.UtcNow,
+                    IsDeleted = false
+                },
+                new User
+                {
+                    UserId = 3,
+                    Username = "lead.user",
+                    Email = "lead@company.com",
+                    FirstName = "Team",
+                    LastName = "Lead",
+                    PhoneNumber = "1234567892",
+                    PasswordHash = "jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=", // admin123
+                    IsActive = true,
+                    LastLoginDate = DateTime.UtcNow,
+                    RoleId = 3,
+                    DepartmentId = 2,
                     CreatedBy = "System",
                     CreatedDate = DateTime.UtcNow,
                     IsDeleted = false

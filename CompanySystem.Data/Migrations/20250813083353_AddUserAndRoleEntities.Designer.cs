@@ -4,6 +4,7 @@ using CompanySystem.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CompanySystem.Data.Migrations
 {
     [DbContext(typeof(CompanySystemDbContext))]
-    partial class CompanySystemDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250813083353_AddUserAndRoleEntities")]
+    partial class AddUserAndRoleEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -64,7 +67,7 @@ namespace CompanySystem.Data.Migrations
                         {
                             DepartmentId = 1,
                             CreatedBy = "System",
-                            CreatedDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1213),
+                            CreatedDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5540),
                             DepartmentName = "Human Resources",
                             IsDeleted = false
                         },
@@ -72,7 +75,7 @@ namespace CompanySystem.Data.Migrations
                         {
                             DepartmentId = 2,
                             CreatedBy = "System",
-                            CreatedDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1215),
+                            CreatedDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5542),
                             DepartmentName = "Information Technology",
                             IsDeleted = false
                         });
@@ -130,7 +133,7 @@ namespace CompanySystem.Data.Migrations
                             ContentId = 1,
                             Content = "We are a leading company in our industry, committed to excellence and innovation.",
                             CreatedBy = "System",
-                            CreatedDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1344),
+                            CreatedDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5662),
                             IsDeleted = false,
                             SectionName = "Overview",
                             Title = "Welcome to Our Company"
@@ -140,7 +143,7 @@ namespace CompanySystem.Data.Migrations
                             ContentId = 2,
                             Content = "Founded in 2020, we have been providing exceptional services to our clients worldwide.",
                             CreatedBy = "System",
-                            CreatedDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1346),
+                            CreatedDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5664),
                             IsDeleted = false,
                             SectionName = "AboutUs",
                             Title = "About Our Company"
@@ -150,7 +153,7 @@ namespace CompanySystem.Data.Migrations
                             ContentId = 3,
                             Content = "We offer a comprehensive range of professional services including consulting and development.",
                             CreatedBy = "System",
-                            CreatedDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1348),
+                            CreatedDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5666),
                             IsDeleted = false,
                             SectionName = "Services",
                             Title = "Our Professional Services"
@@ -261,7 +264,7 @@ namespace CompanySystem.Data.Migrations
                         {
                             RoleId = 1,
                             CreatedBy = "System",
-                            CreatedDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1302),
+                            CreatedDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5616),
                             Description = "Full system access with all permissions",
                             IsActive = true,
                             IsDeleted = false,
@@ -271,27 +274,27 @@ namespace CompanySystem.Data.Migrations
                         {
                             RoleId = 2,
                             CreatedBy = "System",
-                            CreatedDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1304),
+                            CreatedDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5618),
                             Description = "Human Resources management access",
                             IsActive = true,
                             IsDeleted = false,
-                            RoleName = "HR"
+                            RoleName = "HR Manager"
                         },
                         new
                         {
                             RoleId = 3,
                             CreatedBy = "System",
-                            CreatedDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1306),
-                            Description = "Team lead and project management access",
+                            CreatedDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5620),
+                            Description = "Information Technology management access",
                             IsActive = true,
                             IsDeleted = false,
-                            RoleName = "Lead"
+                            RoleName = "IT Manager"
                         },
                         new
                         {
                             RoleId = 4,
                             CreatedBy = "System",
-                            CreatedDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1308),
+                            CreatedDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5621),
                             Description = "Standard employee access",
                             IsActive = true,
                             IsDeleted = false,
@@ -342,11 +345,6 @@ namespace CompanySystem.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
@@ -385,14 +383,13 @@ namespace CompanySystem.Data.Migrations
                         {
                             UserId = 1,
                             CreatedBy = "System",
-                            CreatedDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1326),
+                            CreatedDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5643),
                             Email = "admin@company.com",
                             FirstName = "System",
                             IsActive = true,
                             IsDeleted = false,
-                            LastLoginDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1325),
+                            LastLoginDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5642),
                             LastName = "Administrator",
-                            PasswordHash = "jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=",
                             PhoneNumber = "1234567890",
                             RoleId = 1,
                             Username = "admin"
@@ -401,35 +398,33 @@ namespace CompanySystem.Data.Migrations
                         {
                             UserId = 2,
                             CreatedBy = "System",
-                            CreatedDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1329),
+                            CreatedDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5646),
                             DepartmentId = 1,
                             Email = "hr@company.com",
                             FirstName = "HR",
                             IsActive = true,
                             IsDeleted = false,
-                            LastLoginDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1328),
-                            LastName = "User",
-                            PasswordHash = "jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=",
+                            LastLoginDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5645),
+                            LastName = "Manager",
                             PhoneNumber = "1234567891",
                             RoleId = 2,
-                            Username = "hr.user"
+                            Username = "hr.manager"
                         },
                         new
                         {
                             UserId = 3,
                             CreatedBy = "System",
-                            CreatedDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1332),
+                            CreatedDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5649),
                             DepartmentId = 2,
-                            Email = "lead@company.com",
-                            FirstName = "Team",
+                            Email = "it@company.com",
+                            FirstName = "IT",
                             IsActive = true,
                             IsDeleted = false,
-                            LastLoginDate = new DateTime(2025, 8, 13, 9, 13, 46, 902, DateTimeKind.Utc).AddTicks(1332),
-                            LastName = "Lead",
-                            PasswordHash = "jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=",
+                            LastLoginDate = new DateTime(2025, 8, 13, 8, 33, 53, 143, DateTimeKind.Utc).AddTicks(5648),
+                            LastName = "Manager",
                             PhoneNumber = "1234567892",
                             RoleId = 3,
-                            Username = "lead.user"
+                            Username = "it.manager"
                         });
                 });
 
