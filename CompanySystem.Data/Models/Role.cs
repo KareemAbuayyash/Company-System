@@ -17,7 +17,5 @@ namespace CompanySystem.Data.Models
         [Required]
         public bool IsActive { get; set; } = true;
 
-        // Navigation property for users
-        public virtual ICollection<User> Users { get; set; } = new List<User>();
     }
 }
