@@ -51,8 +51,6 @@ namespace CompanySystem.Data.Models
         [ForeignKey("DepartmentId")]
         public virtual Department? Department { get; set; }
 
-        // Computed property for full name
-        [NotMapped]
-        public string FullName => $"{FirstName} {LastName}".Trim();
+       
     }
 }
